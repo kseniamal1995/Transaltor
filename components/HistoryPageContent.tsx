@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { getCurrentUser, getDecksForUser, getHistory, removeFromHistory } from "@/lib/storage";
 import { HistoryItem } from "./HistoryItem";
-import { PageNav } from "./PageNav";
+import { PageHeader } from "./PageHeader";
+import { t } from "@/lib/strings";
 
 export function HistoryPageContent() {
   const [history, setHistory] = useState<
@@ -24,19 +25,16 @@ export function HistoryPageContent() {
   }, []);
 
   return (
-    <div className="p-4 max-w-xl mx-auto">
-      <PageNav />
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">История</h1>
-        <p className="mt-1 text-gray-600">
-          Все ваши переводы. Сохраните любой в карточку.
-        </p>
-      </header>
+    <div className="px-8 py-6 max-w-[600px] mx-auto flex flex-col gap-12">
+      <PageHeader
+        title={t("history_title")}
+        subtitle={t("history_subtitle")}
+      />
 
       {history.length === 0 ? (
-        <p className="text-gray-500">История пуста. Сделайте первый перевод.</p>
+        <p className="text-gray-500">{t("history_empty")}</p>
       ) : (
-        <ul className="flex flex-col gap-3" aria-label="Список переводов">
+        <ul className="flex flex-col gap-3" aria-label={t("history_aria")}>
           {history.map((item) => (
             <li key={item.id}>
               <HistoryItem

@@ -13,6 +13,8 @@ import {
 import { ALL_CARDS_DECK_ID } from "@/lib/constants";
 import { getLanguageName, getFlagEmoji } from "@/lib/languages";
 import { DeckProgressBar } from "./DeckProgressBar";
+import { PageHeader } from "./PageHeader";
+import { t } from "@/lib/strings";
 
 interface LanguageDeckPageContentProps {
   lang: string;
@@ -61,31 +63,19 @@ export function LanguageDeckPageContent({ lang }: LanguageDeckPageContentProps) 
   const allCardsDeck = decks.find((d) => d.id === ALL_CARDS_DECK_ID);
 
   return (
-    <div className="p-4 max-w-xl mx-auto pb-20">
-      <Link
-        href="/decks"
-        className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline mb-6"
-      >
-        ← Назад
-      </Link>
-
-      <div className="flex items-center justify-between gap-3 mb-6">
-        <div className="flex items-center gap-3">
-          <div
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gray-50 border border-gray-200 text-2xl overflow-hidden"
-            aria-hidden
-          >
-            {getFlagEmoji(lang)}
-          </div>
-          <h1 className="text-xl font-bold text-gray-900">
-            {getLanguageName(lang)}
-          </h1>
-        </div>
+    <div className="px-8 py-6 max-w-[600px] mx-auto flex flex-col gap-12 pb-20">
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <Link
+          href="/decks"
+          className="inline-flex items-center gap-1 text-sm text-text-secondary hover:text-text hover:underline"
+        >
+          ← Назад
+        </Link>
         <button
           type="button"
           onClick={handleDeleteLanguage}
-          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-          aria-label="Удалить язык"
+          className="p-2 text-text-muted hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+          aria-label={t("deck_delete_lang_aria")}
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 6h18" />
@@ -96,6 +86,11 @@ export function LanguageDeckPageContent({ lang }: LanguageDeckPageContentProps) 
           </svg>
         </button>
       </div>
+
+      <PageHeader
+        title={`${getFlagEmoji(lang)} ${getLanguageName(lang)}`}
+        subtitle={t("decks_lang_subtitle")}
+      />
 
       {allCardsDeck && (
         <section className="mb-6" aria-label="Все карточки">

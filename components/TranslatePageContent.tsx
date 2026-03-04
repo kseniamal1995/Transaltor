@@ -18,7 +18,8 @@ import { TranslateInput } from "./TranslateInput";
 import { TranslateResult } from "./TranslateResult";
 import { SaveCardForm } from "./SaveCardForm";
 import { LanguagePairBlock } from "./LanguagePairBlock";
-import { PageNav } from "./PageNav";
+import { PageHeader } from "./PageHeader";
+import { t } from "@/lib/strings";
 
 const MIN_CHARS_TO_TRANSLATE = 2;
 
@@ -105,7 +106,7 @@ export function TranslatePageContent() {
           });
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Ошибка при переводе");
+        setError(err instanceof Error ? err.message : t("translate_error"));
         setTranslatedText(null);
       } finally {
         setIsLoading(false);
@@ -157,7 +158,7 @@ export function TranslatePageContent() {
         setTranslatedText(result.translatedText);
         setDetectedLang(lang === "auto" ? "en" : lang);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Ошибка при переводе");
+        setError(err instanceof Error ? err.message : t("translate_error"));
       } finally {
         setIsLoading(false);
       }
@@ -175,7 +176,7 @@ export function TranslatePageContent() {
         const result = await doTranslate(sourceText, from, newTarget);
         setTranslatedText(result.translatedText);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Ошибка при переводе");
+        setError(err instanceof Error ? err.message : t("translate_error"));
       } finally {
         setIsLoading(false);
       }
@@ -199,7 +200,7 @@ export function TranslatePageContent() {
         foreignLanguage: detectedLang,
         deckIds: [selectedDeckId],
       });
-      setSavedMessage("Карточка сохранена!");
+      setSavedMessage(t("card_saved"));
       setCustomTranslation("");
     } finally {
       setIsSaving(false);
@@ -207,22 +208,21 @@ export function TranslatePageContent() {
   }
 
   return (
-    <div className="p-4 max-w-xl mx-auto">
-      <PageNav />
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Онлайн-переводчик</h1>
-      </header>
+    <div className="px-8 py-6 max-w-[600px] mx-auto flex flex-col gap-12">
+      <PageHeader
+        title={t("translate_hero")}
+        subtitle={t("translate_subtitle")}
+      />
 
-      <div className="flex flex-col gap-4">
-        <LanguagePairBlock
-          sourceLang={sourceLang}
-          targetLang={targetLang}
-          onSourceChange={handleSourceChange}
-          onTargetChange={handleTargetChange}
-          onSwap={handleSwap}
-        />
-
-        <section className="flex flex-col gap-2">
+      <div className="flex flex-col gap-10">
+        <div className="bg-surface border border-border rounded-xl overflow-hidden" data-lang-card>
+          <LanguagePairBlock
+            sourceLang={sourceLang}
+            targetLang={targetLang}
+            onSourceChange={handleSourceChange}
+            onTargetChange={handleTargetChange}
+            onSwap={handleSwap}
+          />
           <TranslateInput
             value={inputValue}
             onChange={setInputValue}
@@ -231,9 +231,9 @@ export function TranslatePageContent() {
               if (trimmed.length >= MIN_CHARS_TO_TRANSLATE) runTranslate(trimmed);
             }}
             disabled={isLoading}
-            placeholder="Введите слово или фразу..."
+            placeholder={t("translate_placeholder")}
           />
-        </section>
+        </div>
 
         <TranslateResult
           isLoading={isLoading}

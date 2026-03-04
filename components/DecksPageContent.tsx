@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { getCurrentUser, getLanguagesInUse } from "@/lib/storage";
 import { getLanguageName, getFlagEmoji } from "@/lib/languages";
-import { PageNav } from "./PageNav";
+import { PageHeader } from "./PageHeader";
+import { t } from "@/lib/strings";
 
 export function DecksPageContent() {
   const [languages, setLanguages] = useState<string[]>([]);
@@ -21,21 +22,16 @@ export function DecksPageContent() {
   }, []);
 
   return (
-    <div className="p-4 max-w-xl mx-auto">
-      <PageNav />
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Колоды</h1>
-        <p className="mt-1 text-gray-600">
-          Ваши карточки по языкам
-        </p>
-      </header>
+    <div className="px-8 py-6 max-w-[600px] mx-auto flex flex-col gap-12">
+      <PageHeader
+        title={t("decks_title")}
+        subtitle={t("decks_subtitle")}
+      />
 
       {languages.length === 0 ? (
-        <p className="mt-6 text-gray-500">
-          Нет карточек. Сохраните слова из перевода — появятся языки.
-        </p>
+        <p className="mt-6 text-gray-500">{t("decks_empty")}</p>
       ) : (
-        <ul className="flex flex-col gap-3" aria-label="Языки">
+        <ul className="flex flex-col gap-3" aria-label={t("decks_aria")}>
           {languages.map((lang) => (
             <li key={lang}>
               <Link

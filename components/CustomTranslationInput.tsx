@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@/lib/strings";
+
 interface CustomTranslationInputProps {
   value: string;
   onChange: (value: string) => void;
@@ -10,8 +12,8 @@ interface CustomTranslationInputProps {
 export function CustomTranslationInput({
   value,
   onChange,
-  placeholder = "Свой перевод (необязательно)",
-  label = "Свой перевод",
+  placeholder = t("card_custom_placeholder"),
+  label = t("card_custom_label"),
 }: CustomTranslationInputProps) {
   return (
     <div className="flex flex-col gap-1">

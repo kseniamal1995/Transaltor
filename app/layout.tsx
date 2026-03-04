@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
 import "./globals.css";
 import { GuestUserSync } from "@/components/GuestUserSync";
+import { AppHeader } from "@/components/AppHeader";
 
 const manrope = Manrope({ subsets: ["latin", "cyrillic"], variable: "--font-manrope" });
 
@@ -27,6 +28,7 @@ export default function RootLayout({
     <html lang="ru" className={`h-full ${manrope.variable}`}>
       <body className="min-h-screen h-full bg-[var(--color-background)] text-[var(--color-text)] antialiased font-sans">
         <GuestUserSync>
+          <AppHeader />
           <main className="min-h-screen">{children}</main>
         </GuestUserSync>
       </body>

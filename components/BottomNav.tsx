@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { t } from "@/lib/strings";
 
 const tabs = [
-  { href: "/translate", label: "Переводчик", icon: "📝" },
-  { href: "/history", label: "История", icon: "📋" },
-  { href: "/decks", label: "Изучение", icon: "🗂️" },
+  { href: "/translate", labelKey: "nav_translator" as const, icon: "📝" },
+  { href: "/history", labelKey: "nav_history" as const, icon: "📋" },
+  { href: "/decks", labelKey: "nav_my_dictionary" as const, icon: "🗂️" },
 ];
 
 export function BottomNav() {
@@ -33,7 +34,7 @@ export function BottomNav() {
               }`}
             >
               <span>{tab.icon}</span>
-              <span>{tab.label}</span>
+              <span>{t(tab.labelKey)}</span>
             </Link>
           );
         })}

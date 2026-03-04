@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Deck } from "@/types";
 import { DeckSelect } from "./DeckSelect";
+import { t } from "@/lib/strings";
 
 const CREATE_NEW_ID = "__create_new__";
 
@@ -21,7 +22,7 @@ export function DeckSelectWithCreate({
   onChange,
   onCreateDeck,
   onDeckCreated,
-  label = "Колода",
+  label = t("decks_deck_label"),
 }: DeckSelectWithCreateProps) {
   const [showCreateInput, setShowCreateInput] = useState(false);
   const [newDeckName, setNewDeckName] = useState("");
@@ -65,7 +66,7 @@ export function DeckSelectWithCreate({
             {deck.name}
           </option>
         ))}
-        <option value={CREATE_NEW_ID}>+ Создать новую колоду</option>
+        <option value={CREATE_NEW_ID}>{t("decks_create_new")}</option>
       </select>
 
       {showCreateInput && (
@@ -74,7 +75,7 @@ export function DeckSelectWithCreate({
             type="text"
             value={newDeckName}
             onChange={(e) => setNewDeckName(e.target.value)}
-            placeholder="Название колоды"
+            placeholder={t("decks_create_placeholder")}
             className="flex-1 px-4 py-2 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             onKeyDown={(e) => e.key === "Enter" && handleCreate()}
             autoFocus
@@ -85,7 +86,7 @@ export function DeckSelectWithCreate({
             disabled={!newDeckName.trim()}
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            Создать
+            {t("decks_create")}
           </button>
         </div>
       )}

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import type { Deck } from "@/types";
 import { createDeck, getCurrentUser, saveCard } from "@/lib/storage";
 import { SaveCardForm } from "./SaveCardForm";
+import { t } from "@/lib/strings";
 
 interface HistoryItemProps {
   id: string;
@@ -64,7 +65,7 @@ export function HistoryItem({
         type="button"
         onClick={onDelete}
         className="absolute top-4 right-4 p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-        aria-label="Удалить из истории"
+        aria-label={t("history_delete_aria")}
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M3 6h18" />
@@ -84,7 +85,7 @@ export function HistoryItem({
               onClick={() => setShowForm(true)}
               className="self-start px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
             >
-              Сохранить как карточку
+              {t("card_save_title")}
             </button>
           </>
         ) : (
