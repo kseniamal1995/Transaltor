@@ -1,0 +1,24 @@
+---
+description: Инструкция по восстановлению Clerk — когда нужно вернуть авторизацию
+globs: app/layout.tsx, components/ClerkUserSync.tsx, components/GuestUserSync.tsx
+alwaysApply: false
+---
+
+# Восстановление Clerk
+
+Когда нужно вернуть Clerk (авторизацию):
+
+## Шаги
+
+1. **В `app/layout.tsx`:**
+   - Добавить `ClerkProvider` (обернуть приложение)
+   - Заменить `GuestUserSync` на `ClerkUserSync`
+   - При логине ClerkUserSync перезапишет `CURRENT_USER` в localStorage реальным `userId`
+
+2. **Текущее состояние (без Clerk):**
+   - `GuestUserSync` создаёт гостевой ID (`guest-xxx`), если пользователя нет
+   - Колоды, история и сохранение карточек работают с этим ID
+
+3. **Данные после возврата Clerk:**
+   - Гостевые данные остаются в `localStorage` под ключами `translator-guest-xxx-*`
+   - После входа под Clerk они не используются, но и не удаляются

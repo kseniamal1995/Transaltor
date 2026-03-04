@@ -1,0 +1,81 @@
+/**
+ * Design Tokens
+ * Обновите значения из Figma: Variables → правый клик → Copy as CSS
+ * или вставьте вручную из вашего файла.
+ */
+
+:root {
+  /* Colors — из Figma (Translator) */
+  /* BG / Main, BG / Primary, BG / Tertiary, BG / Accent */
+  --color-primary: #5fd285;           /* BG / Accent */
+  --color-primary-hover: #4bc473;
+  --color-primary-muted: #e8f5ec;
+
+  --color-background: #fdfbf9;         /* BG / Main */
+  --color-surface: #ffffff;           /* BG / Primary */
+  --color-border: #dad9d5;           /* Stroke / Primary */
+
+  --color-text: #1e2e26;              /* Content/Primary */
+  --color-text-secondary: #7a7c79;    /* Content/Secondary */
+  --color-text-muted: #667085;        /* icon-default */
+
+  --color-success: #5fd285;           /* BG / Accent */
+  --color-error: #dc2626;
+  --color-warning: #d97706;
+
+  /* Figma raw tokens (для совместимости) */
+  --figma-bg-main: #fdfbf9;
+  --figma-bg-primary: #ffffff;
+  --figma-bg-tertiary: #e6e2dc;
+  --figma-bg-accent: #5fd285;
+  --figma-stroke-primary: #dad9d5;
+  --figma-content-primary: #1e2e26;
+  --figma-content-secondary: #7a7c79;
+  --figma-icon-default: #667085;
+
+  /* Spacing (4px base) */
+  --space-1: 0.25rem;   /* 4px */
+  --space-2: 0.5rem;    /* 8px */
+  --space-3: 0.75rem;    /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-5: 1.25rem;   /* 20px */
+  --space-6: 1.5rem;    /* 24px */
+  --space-8: 2rem;      /* 32px */
+  --space-10: 2.5rem;   /* 40px */
+  --space-12: 3rem;     /* 48px */
+  --space-16: 4rem;     /* 64px */
+  --space-20: 5rem;     /* 80px */
+
+  /* Typography — Manrope из Figma */
+  --font-sans: var(--font-manrope, "Manrope"), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", monospace;
+
+  --text-xs: 0.75rem;    /* 12px */
+  --text-sm: 0.875rem;   /* 14px */
+  --text-base: 1rem;     /* 16px */
+  --text-lg: 1.125rem;   /* 18px */
+  --text-xl: 1.25rem;    /* 20px */
+  --text-2xl: 1.5rem;    /* 24px */
+  --text-3xl: 1.875rem;  /* 30px */
+
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+
+  /* Radius */
+  --radius-sm: 0.25rem;   /* 4px */
+  --radius-md: 0.375rem;  /* 6px */
+  --radius-lg: 0.5rem;   /* 8px */
+  --radius-xl: 0.75rem;  /* 12px */
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}

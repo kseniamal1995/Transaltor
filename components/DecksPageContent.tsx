@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { getCurrentUser, getLanguagesInUse } from "@/lib/storage";
 import { getLanguageName, getFlagEmoji } from "@/lib/languages";
+import { PageNav } from "./PageNav";
 
 export function DecksPageContent() {
   const [languages, setLanguages] = useState<string[]>([]);
@@ -21,6 +22,7 @@ export function DecksPageContent() {
 
   return (
     <div className="p-4 max-w-xl mx-auto">
+      <PageNav />
       <header className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Колоды</h1>
         <p className="mt-1 text-gray-600">

@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { ClerkProvider } from "@clerk/nextjs";
+import { Manrope } from "next/font/google";
 import "./globals.css";
-import { BottomNav } from "@/components/BottomNav";
-import { ClerkUserSync } from "@/components/ClerkUserSync";
+import { GuestUserSync } from "@/components/GuestUserSync";
+
+const manrope = Manrope({ subsets: ["latin", "cyrillic"], variable: "--font-manrope" });
 
 export const metadata: Metadata = {
   title: "Карточки для изучения слов",
@@ -14,21 +15,21 @@ export const viewport = {
   initialScale: 1,
 };
 
+// ВРЕМЕННО: Clerk отключён. GuestUserSync даёт гостевой userId для колод/истории.
+// Чтобы вернуть Clerk: добавь ClerkProvider, замени GuestUserSync на ClerkUserSync
+// (ClerkUserSync при логине перезапишет CURRENT_USER реальным userId).
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
-      <html lang="ru" className="h-full">
-        <body className="min-h-screen h-full bg-gray-50 text-gray-900 antialiased">
-          <ClerkUserSync>
-            <main className="min-h-screen pb-20">{children}</main>
-            <BottomNav />
-          </ClerkUserSync>
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang="ru" className={`h-full ${manrope.variable}`}>
+      <body className="min-h-screen h-full bg-[var(--color-background)] text-[var(--color-text)] antialiased font-sans">
+        <GuestUserSync>
+          <main className="min-h-screen">{children}</main>
+        </GuestUserSync>
+      </body>
+    </html>
   );
 }

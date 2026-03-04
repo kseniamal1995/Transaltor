@@ -1,36 +1,8 @@
-// ISO 639-3 (franc) -> ISO 639-1 (MyMemory)
-const ISO3_TO_ISO1: Record<string, string> = {
-  eng: "en",
-  spa: "es",
-  rus: "ru",
-  fra: "fr",
-  deu: "de",
-  ita: "it",
-  por: "pt",
-  zho: "zh",
-  jpn: "ja",
-  kor: "ko",
-  ara: "ar",
-  tur: "tr",
-  pol: "pl",
-  ukr: "uk",
-  nld: "nl",
-  swe: "sv",
-  dan: "da",
-  nor: "no",
-  fin: "fi",
-  hun: "hu",
-  ces: "cs",
-  ron: "ro",
-  bul: "bg",
-  ell: "el",
-  heb: "he",
-  hin: "hi",
-  tha: "th",
-  vie: "vi",
-  ind: "id",
-  und: "auto",
-};
+// Языки, поддерживаемые DeepL API (должны совпадать с app/api/translate/route.ts)
+const DEEPL_ALLOWED_LANGS = new Set([
+  "en", "es", "fr", "de", "it", "pt", "ru", "zh", "ja", "ko", "ar", "tr", "pl", "uk",
+  "nl", "no", "sv", "sk", "sl", "et", "lt", "lv", "st",
+]);
 
 export const SUPPORTED_LANGUAGES = [
   { code: "auto", name: "Авто" },
@@ -63,10 +35,12 @@ export type LanguageCode = (typeof SUPPORTED_LANGUAGES)[number]["code"];
 
 export async function detectLanguage(text: string): Promise<string> {
   if (typeof window === "undefined") return "auto";
-  if (text.trim().length < 10) return "auto";
-  const { franc } = await import("franc");
-  const iso3 = franc(text, { minLength: 1 });
-  return ISO3_TO_ISO1[iso3] ?? "auto";
+  const trimmed = text.trim();
+  if (trimmed.length < 3) return "auto";
+  const { detect } = await import("tinyld/light");
+  const detected = detect(trimmed)?.toLowerCase();
+  if (!detected || !DEEPL_ALLOWED_LANGS.has(detected)) return "auto";
+  return detected;
 }
 
 const DEEPL_TO_BASE: Record<string, string> = {
@@ -133,10 +107,10 @@ export function getFlagEmoji(code: string): string {
   );
 }
 
-// Языки, которые часто ошибочно определяются для коротких латинских слов (hello → Сесото)
-const RARE_FALSE_POSITIVES = new Set(["st", "xho", "tso", "nso"]);
+// Языки, которые часто ошибочно определяются для коротких латинских слов
+const RARE_FALSE_POSITIVES = new Set(["st"]);
 
-/** Для короткого текста исправляет ошибочное определение редких языков (franc/DeepL) */
+/** Для короткого текста исправляет ошибочное определение редких языков */
 export function sanitizeDetectedForShortText(text: string, code: string): string {
   const normalized = normalizeLanguageCode(code);
   if (text.trim().length < 15 && RARE_FALSE_POSITIVES.has(normalized)) {

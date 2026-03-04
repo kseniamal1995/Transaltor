@@ -3,6 +3,8 @@
 interface TranslateInputProps {
   value: string;
   onChange: (value: string) => void;
+  onBlur?: () => void;
+  onTranslate?: () => void;
   disabled?: boolean;
   placeholder?: string;
 }
@@ -10,9 +12,18 @@ interface TranslateInputProps {
 export function TranslateInput({
   value,
   onChange,
+  onBlur,
+  onTranslate,
   disabled = false,
   placeholder = "Введите слово или фразу...",
 }: TranslateInputProps) {
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      onTranslate?.();
+    }
+  }
+
   return (
     <div className="flex flex-col gap-2">
       <label htmlFor="translate-input" className="sr-only">
@@ -22,6 +33,8 @@ export function TranslateInput({
         id="translate-input"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
+        onKeyDown={handleKeyDown}
         placeholder={placeholder}
         disabled={disabled}
         rows={3}

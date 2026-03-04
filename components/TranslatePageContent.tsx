@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   addToHistory,
   createDeck,
@@ -18,8 +18,9 @@ import { TranslateInput } from "./TranslateInput";
 import { TranslateResult } from "./TranslateResult";
 import { SaveCardForm } from "./SaveCardForm";
 import { LanguagePairBlock } from "./LanguagePairBlock";
+import { PageNav } from "./PageNav";
 
-const DEBOUNCE_MS = 500;
+const MIN_CHARS_TO_TRANSLATE = 2;
 
 function getStoredLastTargetLang(): string {
   if (typeof window === "undefined") return "ru";
@@ -40,19 +41,18 @@ function getLangPair(sourceLang: string, targetLang: string): string {
 
 export function TranslatePageContent() {
   const [inputValue, setInputValue] = useState("");
-  const [sourceLang, setSourceLang] = useState("auto");
+  const [sourceLang, setSourceLang] = useState("en");
   const [targetLang, setTargetLang] = useState(() => getStoredLastTargetLang());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [translatedText, setTranslatedText] = useState<string | null>(null);
   const [sourceText, setSourceText] = useState<string | null>(null);
-  const [detectedLang, setDetectedLang] = useState<string>("auto");
+  const [detectedLang, setDetectedLang] = useState<string>("en");
   const [decks, setDecks] = useState<{ id: string; name: string; createdAt: string }[]>([]);
   const [selectedDeckId, setSelectedDeckId] = useState("");
   const [customTranslation, setCustomTranslation] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const user = getCurrentUser();
@@ -116,27 +116,19 @@ export function TranslatePageContent() {
 
   useEffect(() => {
     const trimmed = inputValue.trim();
-
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
-
     if (!trimmed) {
       setTranslatedText(null);
       setSourceText(null);
       setError(null);
       return;
     }
+    if (trimmed.length < MIN_CHARS_TO_TRANSLATE) return;
 
-    debounceRef.current = setTimeout(() => {
+    const timer = setTimeout(() => {
       runTranslate(trimmed);
-    }, DEBOUNCE_MS);
+    }, 900);
 
-    return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-    };
+    return () => clearTimeout(timer);
   }, [inputValue, runTranslate]);
 
   function handleSwap() {
@@ -216,6 +208,7 @@ export function TranslatePageContent() {
 
   return (
     <div className="p-4 max-w-xl mx-auto">
+      <PageNav />
       <header className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Онлайн-переводчик</h1>
       </header>
@@ -229,10 +222,14 @@ export function TranslatePageContent() {
           onSwap={handleSwap}
         />
 
-        <section>
+        <section className="flex flex-col gap-2">
           <TranslateInput
             value={inputValue}
             onChange={setInputValue}
+            onTranslate={() => {
+              const trimmed = inputValue.trim();
+              if (trimmed.length >= MIN_CHARS_TO_TRANSLATE) runTranslate(trimmed);
+            }}
             disabled={isLoading}
             placeholder="Введите слово или фразу..."
           />

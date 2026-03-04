@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { getCurrentUser, getDecksForUser, getHistory, removeFromHistory } from "@/lib/storage";
 import { HistoryItem } from "./HistoryItem";
+import { PageNav } from "./PageNav";
 
 export function HistoryPageContent() {
   const [history, setHistory] = useState<
@@ -24,6 +25,7 @@ export function HistoryPageContent() {
 
   return (
     <div className="p-4 max-w-xl mx-auto">
+      <PageNav />
       <header className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">История</h1>
         <p className="mt-1 text-gray-600">
