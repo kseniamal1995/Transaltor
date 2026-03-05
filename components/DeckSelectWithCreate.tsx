@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import type { Deck } from "@/types";
-import { DeckSelect } from "./DeckSelect";
 import { t } from "@/lib/strings";
 
 const CREATE_NEW_ID = "__create_new__";
@@ -59,7 +58,7 @@ export function DeckSelectWithCreate({
         id="deck-select"
         value={showCreateInput ? CREATE_NEW_ID : displayValue}
         onChange={(e) => handleSelectChange(e.target.value)}
-        className="w-full px-4 py-2 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+        className="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white md:text-base"
       >
         {decks.map((deck) => (
           <option key={deck.id} value={deck.id}>
@@ -76,7 +75,7 @@ export function DeckSelectWithCreate({
             value={newDeckName}
             onChange={(e) => setNewDeckName(e.target.value)}
             placeholder={t("decks_create_placeholder")}
-            className="flex-1 px-4 py-2 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 md:text-base"
             onKeyDown={(e) => e.key === "Enter" && handleCreate()}
             autoFocus
           />

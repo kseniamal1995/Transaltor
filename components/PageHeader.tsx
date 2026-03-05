@@ -14,11 +14,11 @@ interface PageHeaderProps {
 export function PageHeader({ title, subtitle }: PageHeaderProps) {
   return (
     <header className="flex flex-col gap-3 text-center w-full">
-      <h1 className="text-3xl font-semibold text-text leading-normal">
+      <h1 className="text-2xl font-semibold text-text leading-normal md:text-3xl">
         {title}
       </h1>
       {subtitle && (
-        <p className="text-base font-medium text-text-secondary leading-normal">
+        <p className="text-sm font-medium text-text-secondary leading-normal md:text-base">
           {subtitle}
         </p>
       )}

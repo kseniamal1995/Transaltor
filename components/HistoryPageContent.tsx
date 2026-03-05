@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { getCurrentUser, getDecksForUser, getHistory, removeFromHistory } from "@/lib/storage";
 import { HistoryItem } from "./HistoryItem";
 import { PageHeader } from "./PageHeader";
+import { EmptyStateIllustration } from "./EmptyStateIllustration";
 import { t } from "@/lib/strings";
 
 export function HistoryPageContent() {
@@ -25,14 +26,14 @@ export function HistoryPageContent() {
   }, []);
 
   return (
-    <div className="px-8 py-6 max-w-[600px] mx-auto flex flex-col gap-12">
-      <PageHeader
-        title={t("history_title")}
-        subtitle={t("history_subtitle")}
-      />
+    <div className="px-6 py-6 max-w-[600px] mx-auto flex flex-col gap-8 md:px-8">
+      <PageHeader title={t("history_title")} />
 
       {history.length === 0 ? (
-        <p className="text-gray-500">{t("history_empty")}</p>
+        <div className="flex flex-col items-center gap-4 p-6 border border-border rounded-xl text-center">
+          <EmptyStateIllustration className="w-[72px] h-[72px] text-text-muted" />
+          <p className="text-text-secondary">{t("history_empty")}</p>
+        </div>
       ) : (
         <ul className="flex flex-col gap-3" aria-label={t("history_aria")}>
           {history.map((item) => (

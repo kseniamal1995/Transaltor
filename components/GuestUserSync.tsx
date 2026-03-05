@@ -1,17 +1,16 @@
 "use client";
 
+import { useEffect } from "react";
 import { getCurrentUser } from "@/lib/storage";
 import { STORAGE_KEYS } from "@/lib/constants";
 
 /**
- * Когда Clerk отключён: подставляет гостевой userId в localStorage,
- * чтобы работали колоды, история и сохранение карточек.
- *
- * Когда Clerk вернётся: ClerkUserSync будет перезаписывать CURRENT_USER
- * при логине — тогда будет использоваться реальный userId.
+ * Подставляет гостевой userId в localStorage, если его нет.
+ * Экспортируется для ClerkUserSync — при выходе из Clerk нужно сразу восстановить гостя.
  */
-export function GuestUserSync({ children }: { children: React.ReactNode }) {
-  if (typeof window !== "undefined") {
+export function ensureGuestUser() {
+  if (typeof window === "undefined") return;
+  try {
     const user = getCurrentUser();
     if (!user.id) {
       let guestId = localStorage.getItem(STORAGE_KEYS.GUEST_USER_ID);
@@ -19,12 +18,17 @@ export function GuestUserSync({ children }: { children: React.ReactNode }) {
         guestId = `guest-${crypto.randomUUID()}`;
         localStorage.setItem(STORAGE_KEYS.GUEST_USER_ID, guestId);
       }
-      localStorage.setItem(
-        STORAGE_KEYS.CURRENT_USER,
-        JSON.stringify({ id: guestId })
-      );
+      localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify({ id: guestId }));
     }
+  } catch {
+    // localStorage disabled (private mode, quota exceeded)
   }
+}
+
+export function GuestUserSync({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    ensureGuestUser();
+  }, []);
 
   return <>{children}</>;
 }

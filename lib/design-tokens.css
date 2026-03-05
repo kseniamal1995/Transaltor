@@ -11,8 +11,9 @@
   --color-primary-hover: #4bc473;
   --color-primary-muted: #e8f5ec;
 
-  --color-background: #fdfbf9;         /* BG / Main */
+  --color-background: rgba(253, 251, 249, 1);         /* BG / Main */
   --color-surface: #ffffff;           /* BG / Primary */
+  --color-tertiary: #e6e2dc;          /* BG / Tertiary */
   --color-border: #dad9d5;           /* Stroke / Primary */
 
   --color-text: #1e2e26;              /* Content/Primary */

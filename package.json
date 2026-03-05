@@ -1,9 +1,10 @@
 {
   "name": "translator-flashcards",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "private": true,
   "scripts": {
     "dev": "next dev -H 127.0.0.1",
+    "dev:clean": "rm -rf .next && next dev -H 127.0.0.1",
     "dev:fix": "bash scripts/dev.sh",
     "build": "next build",
     "start": "next start",

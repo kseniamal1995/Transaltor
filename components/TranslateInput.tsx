@@ -27,9 +27,9 @@ export function TranslateInput({
   }
 
   return (
-    <div className="flex min-h-[150px] max-h-[200px] p-6">
+    <div className="flex min-h-[110px] p-4 md:p-6">
       <label htmlFor="translate-input" className="sr-only">
-        Текст для перевода
+        {t("translate_input_label")}
       </label>
       <textarea
         id="translate-input"
@@ -40,7 +40,7 @@ export function TranslateInput({
         placeholder={placeholder}
         disabled={disabled}
         rows={3}
-        className="w-full min-h-[120px] h-[fit-content] text-base text-text placeholder:text-text-secondary resize-none focus:outline-none disabled:bg-transparent disabled:cursor-not-allowed bg-transparent"
+        className="w-full min-h-[78px] h-[fit-content] text-base font-normal text-text placeholder:text-text-secondary resize-none focus:outline-none disabled:bg-transparent disabled:cursor-not-allowed bg-transparent"
       />
     </div>
   );

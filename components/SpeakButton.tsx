@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { t } from "@/lib/strings";
 
 const LANG_MAP: Record<string, string> = {
   en: "en-US",
@@ -44,10 +45,10 @@ export function SpeakButton({ text, lang = "en" }: SpeakButtonProps) {
       onClick={handleSpeak}
       disabled={isSpeaking}
       className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
-      aria-label="Произнести"
+      aria-label={t("study_speak_aria")}
     >
       <span className="text-lg">{isSpeaking ? "🔊" : "🔈"}</span>
-      Произнести
+      {t("study_speak_aria")}
     </button>
   );
 }

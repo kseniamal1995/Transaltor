@@ -55,16 +55,26 @@ export function TranslatePageContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
 
+  // Загрузка словарей. Повторяем с задержкой: GuestUserSync/ClerkUserSync могут ещё не успеть установить user.
   useEffect(() => {
-    const user = getCurrentUser();
-    if (user.id) {
-      const userDecks = getDecksForUser(user.id);
-      setDecks(userDecks);
-      setSelectedDeckId((prev) => {
-        const valid = userDecks.some((d) => d.id === prev);
-        return valid ? prev : userDecks[0]?.id ?? "";
-      });
+    function loadDecks() {
+      const user = getCurrentUser();
+      if (user.id) {
+        const userDecks = getDecksForUser(user.id);
+        setDecks(userDecks);
+        setSelectedDeckId((prev) => {
+          const valid = userDecks.some((d) => d.id === prev);
+          return valid ? prev : userDecks[0]?.id ?? "";
+        });
+      }
     }
+    loadDecks();
+    const t1 = setTimeout(loadDecks, 150);
+    const t2 = setTimeout(loadDecks, 600);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
   }, []);
 
   const doTranslate = useCallback(async (text: string, from: string, to: string) => {
@@ -93,6 +103,7 @@ export function TranslatePageContent() {
 
         setTranslatedText(result.translatedText);
         setDetectedLang(langToSave);
+        setCustomTranslation("");
         if (sourceLang === "auto") {
           setSourceLang(langToSave);
         }
@@ -121,6 +132,7 @@ export function TranslatePageContent() {
       setTranslatedText(null);
       setSourceText(null);
       setError(null);
+      setCustomTranslation("");
       return;
     }
     if (trimmed.length < MIN_CHARS_TO_TRANSLATE) return;
@@ -144,43 +156,43 @@ export function TranslatePageContent() {
     }
   }
 
+  async function runTranslateOnLangChange(
+    translateFn: () => Promise<{ translatedText: string }>
+  ) {
+    if (!sourceText || !inputValue.trim()) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await translateFn();
+      setTranslatedText(result.translatedText);
+      setCustomTranslation("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("translate_error"));
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   async function handleSourceChange(newSource: string) {
     setSourceLang(newSource);
-    if (sourceText && inputValue.trim()) {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const from = newSource === "auto" ? await detectLanguage(sourceText) : newSource;
-        const result = await doTranslate(sourceText, from, targetLang);
-        const lang = newSource === "auto"
-          ? sanitizeDetectedForShortText(sourceText, result.sourceLanguage)
-          : newSource;
-        setTranslatedText(result.translatedText);
-        setDetectedLang(lang === "auto" ? "en" : lang);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : t("translate_error"));
-      } finally {
-        setIsLoading(false);
-      }
-    }
+    await runTranslateOnLangChange(async () => {
+      const from = newSource === "auto" ? await detectLanguage(sourceText!) : newSource;
+      const result = await doTranslate(sourceText!, from, targetLang);
+      const lang = newSource === "auto"
+        ? sanitizeDetectedForShortText(sourceText!, result.sourceLanguage)
+        : newSource;
+      setDetectedLang(lang === "auto" ? "en" : lang);
+      return result;
+    });
   }
 
   async function handleTargetChange(newTarget: string) {
     setTargetLang(newTarget);
     setStoredLastTargetLang(newTarget);
-    if (sourceText && inputValue.trim()) {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const from = sourceLang === "auto" ? await detectLanguage(sourceText) : sourceLang;
-        const result = await doTranslate(sourceText, from, newTarget);
-        setTranslatedText(result.translatedText);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : t("translate_error"));
-      } finally {
-        setIsLoading(false);
-      }
-    }
+    await runTranslateOnLangChange(async () => {
+      const from = sourceLang === "auto" ? await detectLanguage(sourceText!) : sourceLang;
+      return doTranslate(sourceText!, from, newTarget);
+    });
   }
 
   function handleSaveCard() {
@@ -207,14 +219,16 @@ export function TranslatePageContent() {
     }
   }
 
+  const showTranslationBlock = isLoading || error || translatedText;
+
   return (
-    <div className="px-8 py-6 max-w-[600px] mx-auto flex flex-col gap-12">
+    <div className="px-6 py-6 max-w-[600px] mx-auto flex flex-col gap-4 md:px-8 md:gap-10">
       <PageHeader
         title={t("translate_hero")}
         subtitle={t("translate_subtitle")}
       />
 
-      <div className="flex flex-col gap-10">
+      <div className="flex flex-col gap-4">
         <div className="bg-surface border border-border rounded-xl overflow-hidden" data-lang-card>
           <LanguagePairBlock
             sourceLang={sourceLang}
@@ -235,12 +249,19 @@ export function TranslatePageContent() {
           />
         </div>
 
-        <TranslateResult
-          isLoading={isLoading}
-          error={error}
-          translatedText={translatedText}
-          sourceText={sourceText ?? undefined}
-        />
+        {showTranslationBlock && (
+          <TranslateResult
+            isLoading={isLoading}
+            error={error}
+            translatedText={translatedText}
+            customTranslation={customTranslation}
+            onCustomTranslationChange={setCustomTranslation}
+            onRetry={() => {
+              const trimmed = inputValue.trim();
+              if (trimmed.length >= MIN_CHARS_TO_TRANSLATE) runTranslate(trimmed);
+            }}
+          />
+        )}
 
         {translatedText && sourceText && decks.length > 0 && (
           <>
@@ -248,15 +269,12 @@ export function TranslatePageContent() {
               <p className="text-sm text-green-600 font-medium">{savedMessage}</p>
             )}
             <SaveCardForm
-              foreign={sourceText}
-              defaultTranslation={translatedText}
+              key={`${sourceText}-${translatedText}`}
               decks={decks}
               selectedDeckId={selectedDeckId}
               onDeckChange={setSelectedDeckId}
               onCreateDeck={(name) => createDeck(getCurrentUser().id, name)}
               onDeckCreated={(deck) => setDecks((prev) => [...prev, deck])}
-              customTranslation={customTranslation}
-              onCustomTranslationChange={setCustomTranslation}
               onSave={handleSaveCard}
               isSaving={isSaving}
             />

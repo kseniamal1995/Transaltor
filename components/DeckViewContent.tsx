@@ -9,6 +9,7 @@ import {
   getDeckProgress,
 } from "@/lib/storage";
 import { ALL_CARDS_DECK_ID } from "@/lib/constants";
+import { t } from "@/lib/strings";
 import { getLanguageName } from "@/lib/languages";
 import { DeckProgressBar } from "./DeckProgressBar";
 
@@ -31,7 +32,7 @@ export function DeckViewContent({ deckId, lang }: DeckViewContentProps) {
     const decks = getDecksForUser(user.id);
     const found = decks.find((d) => d.id === deckId);
     if (found) {
-      const displayName = deckId === ALL_CARDS_DECK_ID && lang ? "Все карточки" : found.name;
+      const displayName = deckId === ALL_CARDS_DECK_ID && lang ? t("decks_all_cards") : found.name;
       setDeck({ ...found, name: displayName });
       const deckCards = getCardsForDeck(user.id, deckId, lang);
       setCards(deckCards);
@@ -42,9 +43,9 @@ export function DeckViewContent({ deckId, lang }: DeckViewContentProps) {
   if (!deck) {
     return (
       <div className="p-4">
-        <p className="text-gray-500">Колода не найдена</p>
+        <p className="text-gray-500">{t("deck_not_found")}</p>
         <Link href="/decks" className="mt-4 text-blue-600 hover:underline">
-          ← Назад к колодам
+          {t("deck_back_to_list")}
         </Link>
       </div>
     );
@@ -59,7 +60,7 @@ export function DeckViewContent({ deckId, lang }: DeckViewContentProps) {
         href="/decks"
         className="inline-block mb-4 text-sm text-blue-600 hover:underline"
       >
-        ← Назад к колодам
+        {t("deck_back_to_list")}
       </Link>
 
       <header className="mb-6">
@@ -80,7 +81,7 @@ export function DeckViewContent({ deckId, lang }: DeckViewContentProps) {
             Режим изучения
           </Link>
 
-          <ul className="flex flex-col gap-3" aria-label="Карточки колоды">
+          <ul className="flex flex-col gap-3" aria-label={t("deck_cards_aria")}>
             {cards.map((card) => (
               <li
                 key={card.id}
@@ -98,7 +99,7 @@ export function DeckViewContent({ deckId, lang }: DeckViewContentProps) {
           </ul>
         </>
       ) : (
-        <p className="text-gray-500">В колоде пока нет карточек</p>
+        <p className="text-gray-500">{t("deck_no_cards_yet")}</p>
       )}
     </div>
   );

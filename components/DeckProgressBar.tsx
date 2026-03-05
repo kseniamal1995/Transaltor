@@ -1,5 +1,7 @@
 "use client";
 
+import { t } from "@/lib/strings";
+
 interface DeckProgressBarProps {
   learned: number;
   total: number;
@@ -14,7 +16,14 @@ export function DeckProgressBar({
   const percent = total > 0 ? Math.round((learned / total) * 100) : 0;
 
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
+    <div
+      className={`flex items-center gap-2 ${className}`}
+      role="progressbar"
+      aria-valuenow={learned}
+      aria-valuemin={0}
+      aria-valuemax={total}
+      aria-label={`${learned}/${total} ${t("deck_progress_aria")}`}
+    >
       <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
         <div
           className="h-full bg-blue-500 rounded-full transition-all duration-300"

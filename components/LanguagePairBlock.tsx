@@ -2,8 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { SUPPORTED_LANGUAGES, getFlagEmoji } from "@/lib/languages";
-import { t } from "@/lib/strings";
+import { SUPPORTED_LANGUAGES, getFlagUrl, getLanguageName, getLangSelectMaxWidth } from "@/lib/languages";
+import { t, getLocale } from "@/lib/strings";
 
 interface LanguagePairBlockProps {
   sourceLang: string;
@@ -34,16 +34,49 @@ const DROPDOWN_EXCLUDED = new Set(["auto", "st"]);
 
 const ruCollator = new Intl.Collator("ru");
 
+function FlagIcon({ code, ariaHidden = true }: { code: string; ariaHidden?: boolean }) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const url = getFlagUrl(code);
+  const placeholder = (
+    <span className="inline-flex shrink-0 w-5 h-5 rounded-full bg-[var(--color-border)]" aria-hidden={ariaHidden} />
+  );
+
+  if (!mounted) return placeholder;
+  if (!url) {
+    return (
+      <span className="inline-flex items-center justify-center shrink-0 w-5 h-5 text-[20px] leading-none" aria-hidden={ariaHidden}>
+        🌐
+      </span>
+    );
+  }
+  return (
+    <img
+      src={url}
+      alt=""
+      className="shrink-0 w-5 h-5 rounded-full"
+      width={20}
+      height={20}
+      aria-hidden={ariaHidden}
+    />
+  );
+}
+
 function LangSelect({
   value,
   onChange,
   options,
   ariaLabel,
+  dropdownId = "lang-dropdown",
+  maxWidth,
 }: {
   value: string;
   onChange: (code: string) => void;
   options: { code: string; name: string }[];
   ariaLabel: string;
+  dropdownId?: string;
+  maxWidth: string;
 }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -112,16 +145,19 @@ function LangSelect({
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Node;
       if (triggerRef.current?.contains(target)) return;
-      const dropdown = document.getElementById("lang-dropdown");
+      const dropdown = document.getElementById(dropdownId);
       if (dropdown?.contains(target)) return;
       setOpen(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open]);
+  }, [open, dropdownId]);
 
   useEffect(() => {
-    if (open) setFocusedIndex(filteredOptions.findIndex((o) => o.code === displayValue));
+    if (open) {
+      const idx = filteredOptions.findIndex((o) => o.code === displayValue);
+      setFocusedIndex(idx >= 0 ? idx : 0);
+    }
   }, [open, displayValue, filteredOptions]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -146,36 +182,45 @@ function LangSelect({
         setFocusedIndex((i) => (i > 0 ? i - 1 : filteredOptions.length - 1));
         break;
       }
-      case "Enter":
+      case "Enter": {
         e.preventDefault();
-        if (filteredOptions[focusedIndex]) {
-          onChange(filteredOptions[focusedIndex].code);
+        const idx = focusedIndex >= 0 ? focusedIndex : 0;
+        const option = filteredOptions[idx];
+        if (option) {
+          onChange(option.code);
           setOpen(false);
         }
         break;
+      }
       default:
         break;
     }
   };
 
   return (
-    <div className="flex items-center gap-3 w-fit min-w-0 justify-center">
-      <span className="hidden min-[601px]:inline text-xl leading-none shrink-0" aria-hidden>
-        {displayValue === "auto" ? "🌐" : getFlagEmoji(displayValue)}
+    <div
+      className="flex items-center gap-2 w-fit min-w-0 justify-center"
+      style={{ maxWidth }}
+    >
+      <span className="hidden min-[601px]:inline shrink-0">
+        <FlagIcon code={displayValue} />
       </span>
-      <div className="inline-flex shrink-0">
+      <div
+        className="inline-flex shrink-0 min-w-0"
+        style={{ maxWidth }}
+      >
         <button
           ref={triggerRef}
           type="button"
           onClick={() => setOpen((o) => !o)}
           onKeyDown={handleKeyDown}
-          className="flex items-center gap-3 py-1 bg-transparent text-base font-semibold text-text cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded"
+          className="flex items-center gap-1.5 py-1 bg-transparent text-sm font-semibold text-text cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded md:text-base"
           aria-label={ariaLabel}
           aria-haspopup="listbox"
           aria-expanded={open}
-          aria-activedescendant={open && filteredOptions[focusedIndex] ? `lang-option-${filteredOptions[focusedIndex].code}` : undefined}
+          aria-activedescendant={open && filteredOptions[Math.max(0, focusedIndex)] ? `lang-option-${filteredOptions[Math.max(0, focusedIndex)].code}` : undefined}
         >
-          <span className="min-w-0 truncate">{selectedOption.name}</span>
+          <span className="min-w-0 truncate text-left">{selectedOption.name}</span>
           <ChevronDownIcon className="w-4 h-4 shrink-0 text-text-muted" />
         </button>
 
@@ -183,7 +228,7 @@ function LangSelect({
           dropdownRect &&
           createPortal(
             <div
-              id="lang-dropdown"
+              id={dropdownId}
               role="listbox"
               aria-label={ariaLabel}
               className={`fixed z-[100] bg-surface border border-border overflow-hidden flex flex-col shadow-[0_6px_20px_rgb(0_0_0_/_0.08),0_8px_8px_rgb(0_0_0_/_0.05)] ${dropdownRect.openUp ? "rounded-t-xl" : "rounded-b-xl"}`}
@@ -221,7 +266,7 @@ function LangSelect({
                 </div>
               </div>
               <ul
-                className="overflow-auto py-2 grid gap-0"
+                className="overflow-auto p-2 grid gap-0"
                 style={{
                   gridTemplateColumns: `repeat(${cols}, 1fr)`,
                   gridTemplateRows: rows > 0 ? `repeat(${rows}, auto)` : "auto",
@@ -237,7 +282,7 @@ function LangSelect({
                       id={`lang-option-${option.code}`}
                       role="option"
                       aria-selected={option.code === displayValue}
-                      className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer text-sm transition-colors ${
+                      className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer text-sm transition-colors rounded-lg ${
                         option.code === displayValue
                           ? "bg-primary-muted text-text font-semibold"
                           : "text-text hover:bg-[var(--color-border)]/30"
@@ -248,9 +293,7 @@ function LangSelect({
                       }}
                       onMouseEnter={() => setFocusedIndex(i)}
                     >
-                      <span className="text-lg leading-none shrink-0" aria-hidden>
-                        {getFlagEmoji(option.code)}
-                      </span>
+                      <FlagIcon code={option.code} />
                       <span className="min-w-0 truncate">{option.name}</span>
                     </li>
                   ))
@@ -271,25 +314,31 @@ export function LanguagePairBlock({
   onTargetChange,
   onSwap,
 }: LanguagePairBlockProps) {
+  const locale = getLocale();
+  const maxWidth = getLangSelectMaxWidth(locale);
   const sourceOptions = SUPPORTED_LANGUAGES.map((l) => ({
     code: l.code,
-    name: l.code === "auto" ? t("lang_auto") : l.name,
+    name: l.code === "auto" ? t("lang_auto") : getLanguageName(l.code, locale),
   })).sort((a, b) => ruCollator.compare(a.name, b.name));
   const targetOptions = SUPPORTED_LANGUAGES.filter((l) => l.code !== "auto")
-    .map((l) => ({ code: l.code, name: l.name }))
+    .map((l) => ({ code: l.code, name: getLanguageName(l.code, locale) }))
     .sort((a, b) => ruCollator.compare(a.name, b.name));
 
   return (
     <div
-      className="flex items-center justify-center gap-6 p-4 border-b border-border h-[54px]"
+      className="flex items-center gap-4 sm:gap-6 p-4 border-b border-border h-[54px]"
       aria-label="Выбор языков перевода"
     >
+      <div className="flex-1 flex justify-end min-w-0">
       <LangSelect
         value={sourceLang}
         onChange={onSourceChange}
         options={sourceOptions}
         ariaLabel={t("lang_source_label")}
+        dropdownId="lang-dropdown-source"
+        maxWidth={maxWidth}
       />
+      </div>
 
       <button
         type="button"
@@ -314,12 +363,16 @@ export function LanguagePairBlock({
         </svg>
       </button>
 
+      <div className="flex-1 flex justify-start min-w-0">
       <LangSelect
         value={targetLang}
         onChange={onTargetChange}
         options={targetOptions}
         ariaLabel={t("lang_target_label")}
+        dropdownId="lang-dropdown-target"
+        maxWidth={maxWidth}
       />
+      </div>
     </div>
   );
 }

@@ -1,26 +1,24 @@
 "use client";
 
+import { useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import { STORAGE_KEYS } from "@/lib/constants";
+import { ensureGuestUser } from "./GuestUserSync";
 
-/** Синхронизирует Clerk userId в localStorage для совместимости с существующим storage */
+/** Синхронизирует Clerk userId в localStorage. При выходе очищает и сразу подставляет гостя. */
 export function ClerkUserSync({ children }: { children: React.ReactNode }) {
   const { isLoaded, user } = useUser();
 
-  if (!isLoaded) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-
-  if (user && typeof window !== "undefined") {
-    localStorage.setItem(
-      STORAGE_KEYS.CURRENT_USER,
-      JSON.stringify({ id: user.id })
-    );
-  }
+  useEffect(() => {
+    if (typeof window === "undefined" || !isLoaded) return;
+    if (user) {
+      localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify({ id: user.id }));
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+      localStorage.removeItem(STORAGE_KEYS.GUEST_USER_ID);
+      ensureGuestUser();
+    }
+  }, [isLoaded, user?.id]);
 
   return <>{children}</>;
 }

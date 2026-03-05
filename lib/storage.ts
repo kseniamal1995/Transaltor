@@ -114,7 +114,7 @@ export function addToHistory(
     id: generateId(),
     createdAt: new Date().toISOString(),
   };
-  const updated = [newItem, ...history.filter((h) => h.id !== newItem.id)];
+  const updated = [newItem, ...history];
   localStorage.setItem(
     getStorageKey(userId, "history"),
     JSON.stringify(updated)
@@ -212,7 +212,7 @@ export function getDecksForLanguage(
   const result: { id: string; name: string; createdAt: string }[] = [];
   result.push({
     id: ALL_CARDS_DECK_ID,
-    name: "Все карточки",
+    name: "Все слова",
     createdAt: "",
   });
 

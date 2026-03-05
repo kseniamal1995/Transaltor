@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getCurrentUser, getLanguagesInUse } from "@/lib/storage";
 import { getLanguageName, getFlagEmoji } from "@/lib/languages";
 import { PageHeader } from "./PageHeader";
+import { EmptyStateIllustration } from "./EmptyStateIllustration";
 import { t } from "@/lib/strings";
 
 export function DecksPageContent() {
@@ -22,14 +23,14 @@ export function DecksPageContent() {
   }, []);
 
   return (
-    <div className="px-8 py-6 max-w-[600px] mx-auto flex flex-col gap-12">
-      <PageHeader
-        title={t("decks_title")}
-        subtitle={t("decks_subtitle")}
-      />
+    <div className="px-6 py-6 max-w-[600px] mx-auto flex flex-col gap-8 md:px-8">
+      <PageHeader title={t("decks_title")} />
 
       {languages.length === 0 ? (
-        <p className="mt-6 text-gray-500">{t("decks_empty")}</p>
+        <div className="flex flex-col items-center gap-4 p-6 border border-border rounded-xl text-center">
+          <EmptyStateIllustration className="w-[72px] h-[72px] text-text-muted" />
+          <p className="text-text-secondary">{t("decks_empty")}</p>
+        </div>
       ) : (
         <ul className="flex flex-col gap-3" aria-label={t("decks_aria")}>
           {languages.map((lang) => (

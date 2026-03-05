@@ -10,6 +10,7 @@ import {
   setCardLearned,
 } from "@/lib/storage";
 import { ALL_CARDS_DECK_ID } from "@/lib/constants";
+import { t } from "@/lib/strings";
 import { DeckProgressBar } from "./DeckProgressBar";
 import { StudyCard } from "./StudyCard";
 import { SpeakButton } from "./SpeakButton";
@@ -48,7 +49,7 @@ export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
     const decks = getDecksForUser(user.id);
     const found = decks.find((d) => d.id === deckId);
     if (found) {
-      const displayName = deckId === ALL_CARDS_DECK_ID && lang ? "Все карточки" : found.name;
+      const displayName = deckId === ALL_CARDS_DECK_ID && lang ? t("decks_all_cards") : found.name;
       setDeck({ ...found, name: displayName });
       const deckCards = getCardsForDeck(user.id, deckId, lang);
       setCards(deckCards);
@@ -136,10 +137,10 @@ export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
 
   if (!deck) {
     return (
-      <div className="p-4">
-        <p className="text-gray-500">Колода не найдена</p>
-        <Link href="/decks" className="mt-4 text-blue-600 hover:underline">
-          ← Назад к колодам
+      <div className="px-6 py-6 max-w-[600px] mx-auto flex flex-col gap-4 md:px-8">
+        <p className="text-text-secondary">{t("deck_not_found")}</p>
+        <Link href="/decks" className="inline-flex items-center gap-1 text-sm text-text-secondary hover:text-text hover:underline w-fit">
+          {t("deck_back_to_list")}
         </Link>
       </div>
     );
@@ -147,25 +148,25 @@ export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
 
   if (sessionComplete) {
     return (
-      <div className="p-4 max-w-xl mx-auto flex flex-col items-center justify-center min-h-[60vh]">
+      <div className="px-6 py-6 max-w-[600px] mx-auto flex flex-col items-center justify-center min-h-[60vh] gap-6 md:px-8">
         <Link
           href={lang ? `/deck/${deckId}?lang=${encodeURIComponent(lang)}` : `/deck/${deckId}`}
-          className="text-blue-600 hover:underline mb-6"
+          className="inline-flex items-center gap-1 text-sm text-text-secondary hover:text-text hover:underline w-fit"
         >
-          ← Назад к колоде
+          {t("deck_back_to_deck")}
         </Link>
-        <h2 className="text-2xl font-bold text-gray-900">Раунд завершён!</h2>
-        <p className="mt-2 text-gray-600 text-center">
+        <h2 className="text-2xl font-semibold text-text md:text-3xl">Раунд завершён!</h2>
+        <p className="text-text-secondary text-center">
           Вы просмотрели все карточки. Прогресс сохранён.
         </p>
         <DeckProgressBar
           learned={progress.learned}
           total={progress.total}
-          className="mt-4 w-48"
+          className="w-48"
         />
         <Link
           href={lang ? `/deck/${deckId}/study?lang=${encodeURIComponent(lang)}` : `/deck/${deckId}/study`}
-          className="mt-6 px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700"
+          className="px-6 py-3 bg-[var(--color-primary)] text-white font-medium rounded-xl hover:bg-[var(--color-primary-hover)] transition-colors"
         >
           Повторить
         </Link>
@@ -175,16 +176,16 @@ export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
 
   if (cards.length === 0) {
     return (
-      <div className="p-4 max-w-xl mx-auto">
+      <div className="px-6 py-6 max-w-[600px] mx-auto flex flex-col gap-4 md:px-8">
         <Link
           href={lang ? `/deck/${deckId}?lang=${encodeURIComponent(lang)}` : `/deck/${deckId}`}
-          className="inline-block mb-4 text-sm text-blue-600 hover:underline"
+          className="inline-flex items-center gap-1 text-sm text-text-secondary hover:text-text hover:underline w-fit"
         >
-          ← Назад к колоде
+          {t("deck_back_to_deck")}
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">Режим изучения</h1>
-        <p className="mt-2 text-gray-600">
-          В колоде нет карточек для изучения.
+        <h1 className="text-2xl font-semibold text-text md:text-3xl">Режим изучения</h1>
+        <p className="text-text-secondary">
+          {t("deck_empty_cards")}
         </p>
       </div>
     );
@@ -194,53 +195,56 @@ export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
 
   return (
     <div
-      className="min-h-screen flex flex-col bg-gray-50"
+      className="px-6 py-6 max-w-[600px] mx-auto flex flex-col gap-6 min-h-screen md:px-8"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
-      <header className="p-4 bg-white border-b border-gray-200 shrink-0">
+      <header className="flex flex-col gap-3 shrink-0">
         <Link
           href={lang ? `/deck/${deckId}?lang=${encodeURIComponent(lang)}` : `/deck/${deckId}`}
-          className="text-sm text-blue-600 hover:underline"
+          className="inline-flex items-center gap-1 text-sm text-text-secondary hover:text-text hover:underline w-fit"
         >
-          ← Назад к колоде
+          {t("deck_back_to_deck")}
         </Link>
-        <h1 className="mt-2 text-lg font-semibold text-gray-900">{deck.name}</h1>
+        <h1 className="text-2xl font-semibold text-text leading-normal md:text-3xl">
+          {deck.name}
+        </h1>
         <DeckProgressBar
           learned={progress.learned}
           total={progress.total}
-          className="mt-2"
+          className="w-full"
         />
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="text-xs text-text-muted">
           Карточка {currentIndex + 1} из {cards.length}
         </p>
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-center p-4">
+      <main className="flex-1 flex flex-col items-center justify-center w-full min-h-0">
         <StudyCard
           foreign={currentCard.foreign}
           translation={displayTranslation}
           isFlipped={isFlipped}
           onFlip={handleFlip}
           swipeOffset={swipeOffset}
+          className="w-full max-w-[400px]"
         />
 
         {isFlipped && (
-          <div className="mt-6 flex gap-4">
+          <div className="mt-6 flex flex-wrap gap-3 justify-center">
             <button
               type="button"
               onClick={() => handleSwipe(false)}
-              className="px-6 py-3 rounded-xl border-2 border-gray-300 text-gray-700 font-medium hover:bg-gray-100 transition-colors"
+              className="px-5 py-2.5 rounded-xl border border-border text-text font-medium hover:bg-[var(--color-tertiary)] transition-colors"
             >
               ✗ Ещё раз
             </button>
             <button
               type="button"
               onClick={() => handleSwipe(true)}
-              className="px-6 py-3 rounded-xl bg-green-600 text-white font-medium hover:bg-green-700 transition-colors"
+              className="px-5 py-2.5 rounded-xl bg-[var(--color-primary)] text-white font-medium hover:bg-[var(--color-primary-hover)] transition-colors"
             >
               ✓ Выучено
             </button>
@@ -256,7 +260,7 @@ export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
       </main>
 
       {isLastCard && isFlipped && (
-        <p className="p-4 text-center text-gray-500 text-sm">
+        <p className="py-2 text-center text-text-muted text-sm">
           Последняя карточка. Нажмите «Выучено» или «Ещё раз».
         </p>
       )}
