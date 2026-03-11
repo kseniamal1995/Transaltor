@@ -1,8 +1,10 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-// Все маршруты публичны — авторизация опциональна.
-// Гостевые пользователи получают ID через GuestUserSync (localStorage).
-export default clerkMiddleware();
+// Clerk временно отключён для локальной разработки
+export function middleware(_request: NextRequest) {
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useUser } from "@clerk/nextjs";
+
 import {
   addToHistory,
   createDeck,
@@ -48,8 +48,7 @@ function getLangPair(sourceLang: string, targetLang: string): string {
 }
 
 export function TranslatePageContent() {
-  const { isSignedIn } = useUser();
-  const isLoggedIn = isSignedIn === true;
+  const isLoggedIn = false;
 
   const [inputValue, setInputValue] = useState("");
   const [sourceLang, setSourceLang] = useState("en");

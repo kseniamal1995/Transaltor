@@ -21,6 +21,14 @@ function CopyIcon({ className }: { className?: string }) {
   );
 }
 
+function CheckIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  );
+}
+
 export function TranslationCard({
   defaultTranslation,
   customTranslation,
@@ -54,7 +62,7 @@ export function TranslationCard({
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      setTimeout(() => setCopied(false), 3000);
     } catch {
       // clipboard not available
     }
@@ -83,11 +91,14 @@ export function TranslationCard({
           <button
             type="button"
             onClick={handleCopy}
-            className="p-1 rounded-xl text-text-secondary hover:text-text transition-colors"
+            className="p-[6px] rounded-xl text-text-secondary hover:bg-tertiary transition-colors"
             aria-label="Копировать перевод"
             title={copied ? "Скопировано!" : "Копировать"}
           >
-            <CopyIcon className={`w-6 h-6 ${copied ? "text-primary" : ""}`} />
+            {copied
+              ? <CheckIcon className="w-5 h-5 text-[var(--color-primary)]" />
+              : <CopyIcon className="w-5 h-5" />
+            }
           </button>
           <SpeakButton text={displayText} lang={lang} iconOnly />
         </div>
@@ -99,7 +110,9 @@ export function TranslationCard({
             aria-checked={isCustomEnabled}
             onClick={handleToggle}
             className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 ${
-              isCustomEnabled ? "bg-[var(--color-primary)]" : "bg-tertiary"
+              isCustomEnabled
+                ? "bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)]"
+                : "bg-tertiary hover:bg-border"
             }`}
             aria-label={t("card_custom_label")}
           >

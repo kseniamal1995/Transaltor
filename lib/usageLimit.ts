@@ -36,9 +36,9 @@ function writeUsageData(data: UsageData): void {
 }
 
 /** Можно ли делать перевод прямо сейчас */
-export function canTranslate(isLoggedIn: boolean): boolean {
-  if (isLoggedIn) return true;
-  return readUsageData().count < DAILY_GUEST_LIMIT;
+export function canTranslate(_isLoggedIn: boolean): boolean {
+  // Лимит временно отключён для локальной разработки
+  return true;
 }
 
 /** Фиксировать один использованный перевод (только для гостей) */

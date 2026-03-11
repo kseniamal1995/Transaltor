@@ -46,7 +46,7 @@ export function SpeakButton({ text, lang = "en", iconOnly = false }: SpeakButton
         type="button"
         onClick={handleSpeak}
         disabled={isSpeaking}
-        className="p-1 rounded-xl text-text-secondary hover:text-text disabled:opacity-50 transition-colors"
+        className="p-[6px] rounded-xl text-text-secondary hover:bg-tertiary disabled:opacity-50 transition-colors"
         aria-label={t("study_speak_aria")}
       >
         <svg
@@ -57,7 +57,7 @@ export function SpeakButton({ text, lang = "en", iconOnly = false }: SpeakButton
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className={`w-6 h-6 ${isSpeaking ? "text-primary" : ""}`}
+          className={`w-5 h-5 ${isSpeaking ? "text-primary" : ""}`}
         >
           <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
           <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
