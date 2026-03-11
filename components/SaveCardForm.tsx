@@ -22,15 +22,16 @@ export function SaveCardForm({
   onDeckCreated,
   onCreateDeck,
   onSave,
-  onCancel,
   isSaving = false,
 }: SaveCardFormProps) {
   return (
     <section
       aria-label={t("card_save_aria")}
-      className="mt-4 p-4 bg-surface border border-border rounded-xl"
+      className="bg-surface-secondary rounded-2xl p-5 flex flex-col gap-3"
     >
-      <div className="flex flex-col gap-3">
+      <p className="text-base font-bold text-text">{t("card_save_choose_deck")}</p>
+
+      <div className="flex gap-3 items-start">
         <DeckSelectWithCreate
           decks={decks}
           value={selectedDeckId}
@@ -39,26 +40,14 @@ export function SaveCardForm({
           onDeckCreated={onDeckCreated}
         />
 
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={onSave}
-            disabled={isSaving}
-            className="flex-1 px-4 py-3 text-base font-bold text-white bg-[var(--color-primary)] rounded-xl hover:bg-[var(--color-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isSaving ? t("card_saving") : t("card_save")}
-          </button>
-          {onCancel && (
-            <button
-              type="button"
-              onClick={onCancel}
-              disabled={isSaving}
-              className="px-4 py-3 text-base font-medium text-text-secondary bg-surface border border-border rounded-xl hover:bg-surface-secondary disabled:opacity-50 transition-colors"
-            >
-              {t("card_cancel")}
-            </button>
-          )}
-        </div>
+        <button
+          type="button"
+          onClick={onSave}
+          disabled={isSaving}
+          className="shrink-0 px-4 py-3 text-base font-bold text-white bg-[var(--color-primary)] rounded-xl hover:bg-[var(--color-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {isSaving ? t("card_saving") : t("card_save")}
+        </button>
       </div>
     </section>
   );
