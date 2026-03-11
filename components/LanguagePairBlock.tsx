@@ -326,24 +326,24 @@ export function LanguagePairBlock({
 
   return (
     <div
-      className="flex items-center gap-4 sm:gap-6 p-4 border-b border-border h-[54px]"
+      className="flex items-center gap-2 py-3"
       aria-label="Выбор языков перевода"
     >
-      <div className="flex-1 flex justify-end min-w-0">
-      <LangSelect
-        value={sourceLang}
-        onChange={onSourceChange}
-        options={sourceOptions}
-        ariaLabel={t("lang_source_label")}
-        dropdownId="lang-dropdown-source"
-        maxWidth={maxWidth}
-      />
+      <div className="flex-1 flex justify-center items-center min-w-0">
+        <LangSelect
+          value={sourceLang}
+          onChange={onSourceChange}
+          options={sourceOptions}
+          ariaLabel={t("lang_source_label")}
+          dropdownId="lang-dropdown-source"
+          maxWidth={maxWidth}
+        />
       </div>
 
       <button
         type="button"
         onClick={onSwap}
-        className="flex-shrink-0 p-1 text-primary hover:text-primary-hover transition-colors"
+        className="flex-shrink-0 p-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white rounded-xl transition-colors"
         aria-label={t("lang_swap_aria")}
       >
         <svg
@@ -363,15 +363,15 @@ export function LanguagePairBlock({
         </svg>
       </button>
 
-      <div className="flex-1 flex justify-start min-w-0">
-      <LangSelect
-        value={targetLang}
-        onChange={onTargetChange}
-        options={targetOptions}
-        ariaLabel={t("lang_target_label")}
-        dropdownId="lang-dropdown-target"
-        maxWidth={maxWidth}
-      />
+      <div className="flex-1 flex justify-center items-center min-w-0">
+        <LangSelect
+          value={targetLang}
+          onChange={onTargetChange}
+          options={targetOptions}
+          ariaLabel={t("lang_target_label")}
+          dropdownId="lang-dropdown-target"
+          maxWidth={maxWidth}
+        />
       </div>
     </div>
   );

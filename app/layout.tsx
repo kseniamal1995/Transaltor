@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Manrope } from "next/font/google";
+import { Manrope, Zen_Antique } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 import { GuestUserSync } from "@/components/GuestUserSync";
@@ -7,6 +7,7 @@ import { ClerkUserSync } from "@/components/ClerkUserSync";
 import { AppHeader } from "@/components/AppHeader";
 
 const manrope = Manrope({ subsets: ["latin", "cyrillic"], variable: "--font-manrope" });
+const zenAntique = Zen_Antique({ subsets: ["latin"], weight: "400", variable: "--font-zen-antique" });
 
 export const metadata: Metadata = {
   title: "Карточки для изучения слов",
@@ -24,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" className={`h-full ${manrope.variable}`}>
+    <html lang="ru" className={`h-full ${manrope.variable} ${zenAntique.variable}`}>
       <body className="min-h-screen h-full bg-[var(--color-background)] text-[var(--color-text)] antialiased font-sans">
         <ClerkProvider>
           <ClerkUserSync>

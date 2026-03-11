@@ -1,0 +1,28 @@
+---
+description: Стандарты написания кода. Загружается всегда.
+globs:
+alwaysApply: true
+---
+
+# Стандарты кода
+
+## TypeScript
+- strict: true — никаких `any`
+- `interface` для объектов, `type` для union/intersection
+- Zod при необходимости для runtime-валидации
+
+## Обработка ошибок
+- Early return для edge cases
+- Не глотай ошибки: логируй или пробрасывай
+- API: `{ error: string }` + HTTP-код
+
+## React
+- `"use client"` — только когда нужен (useState, useEffect, события)
+- `useMemo`/`useCallback` — только при измеримой необходимости
+- Один компонент = один файл
+
+## Стиль
+- Функция > 50 строк → декомпозируй
+- Комментарии: только «почему», не «что»
+- Named export, не default
+- Именование: PascalCase для компонентов, camelCase для функций/хуков

@@ -1,0 +1,30 @@
+---
+description: Правила для стилей и CSS. Подключается при работе с CSS-файлами.
+globs: "**/*.css"
+alwaysApply: false
+---
+
+# Стили
+
+## Архитектура стилей
+- `lib/design-tokens.css` — CSS-переменные (цвета, шрифты, отступы, радиусы, тени)
+- `app/globals.css` — базовые стили, подключение Tailwind
+- `tailwind.config.ts` — маппинг CSS-переменных в Tailwind-классы
+
+## Дизайн-токены (CSS-переменные)
+- Цвета: `--color-primary`, `--color-background`, `--color-surface`, `--color-text`, `--color-border`
+- Типографика: `--text-sm`, `--text-base`, `--text-lg`, `--font-sans` (Manrope)
+- Отступы: `--space-1` (4px) ... `--space-20` (80px)
+- Радиусы: `--radius-sm` ... `--radius-full`
+- Тени: `--shadow-sm`, `--shadow-md`, `--shadow-lg`
+
+## Правила
+- Все цвета — через CSS-переменные, не хардкод
+- Tailwind-классы используют extended theme: `text-text`, `bg-surface`, `border-border`
+- Для кастомных значений: `bg-[var(--color-primary)]`
+- Шрифт: Manrope (через `--font-sans`)
+
+## При добавлении нового токена
+1. Добавить CSS-переменную в `lib/design-tokens.css`
+2. Добавить маппинг в `tailwind.config.ts` (если нужен Tailwind-класс)
+3. Согласовать с дизайном (Figma)

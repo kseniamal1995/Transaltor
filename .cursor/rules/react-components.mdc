@@ -1,0 +1,53 @@
+---
+description: Правила для React-компонентов. Подключается при работе с .tsx файлами в components/.
+globs: components/**/*.tsx
+alwaysApply: false
+---
+
+# React-компоненты
+
+## Структура файла (сверху вниз)
+1. `"use client"` (если нужен)
+2. Импорты
+3. Props interface
+4. Компонент (export function)
+5. Вспомогательные функции (если нужны, приватные)
+
+## Правила
+- Named export: `export function Button(...)`, не `export default`
+- Пропсы через деструктуризацию в сигнатуре
+- Один компонент = один файл
+- Имя файла = имя компонента (PascalCase)
+
+## Пример
+
+```tsx
+"use client";
+
+import { t } from "@/lib/strings";
+
+interface ButtonProps {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+}
+
+export function Button({ label, onClick, disabled = false }: ButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="px-4 py-2 bg-[var(--color-primary)] text-white rounded-xl"
+    >
+      {label}
+    </button>
+  );
+}
+```
+
+## Стили
+- Tailwind классы + CSS-переменные из design-tokens.css
+- Цвета: `text-text`, `bg-surface`, `border-border`, `bg-[var(--color-primary)]`
+- Не хардкодить цвета: `bg-blue-600` → `bg-[var(--color-primary)]`
+- UI-строки: `t("key")` из lib/strings.ts, не хардкод

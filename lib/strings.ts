@@ -20,8 +20,17 @@ const translations: Record<Locale, Record<string, string>> = {
     nav_logout: "Выйти",
     nav_menu_aria: "Меню",
 
+    // Лимит переводов для гостей
+    limit_warning: "Осталось {n} переводов на сегодня",
+    limit_warning_one: "Остался {n} перевод на сегодня",
+    limit_reached_title: "Дневной лимит исчерпан",
+    limit_reached_desc: "Войдите или зарегистрируйтесь, чтобы переводить без ограничений",
+    limit_sign_in: "Войти",
+    limit_sign_up: "Зарегистрироваться",
+    limit_reached_error: "Вы исчерпали дневной лимит ({n} переводов). Войдите для продолжения.",
+
     // Главная (переводчик)
-    translate_hero: "Переводи. Сохраняй. Изучай.",
+    translate_hero: "Твой словарь иностранных слов",
     translate_subtitle: "Переводи слова с любого языка и сохраняй их в личный словарь",
     translate_placeholder: "Введите слово или фразу...",
     translate_input_label: "Текст для перевода",
@@ -37,6 +46,7 @@ const translations: Record<Locale, Record<string, string>> = {
     lang_auto: "Авто",
 
     // Результат
+    result_placeholder: "Здесь будет перевод",
     result_loading: "Перевожу...",
     result_retry: "Повторить",
 
@@ -117,6 +127,7 @@ const translations: Record<Locale, Record<string, string>> = {
     lang_search_empty: "No results",
     lang_swap_aria: "Swap languages",
     lang_auto: "Auto",
+    result_placeholder: "Translation will appear here",
     result_loading: "Translating...",
     result_retry: "Retry",
     card_saved: "Card saved!",

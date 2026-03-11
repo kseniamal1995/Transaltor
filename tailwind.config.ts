@@ -13,6 +13,7 @@ const config: Config = {
         "primary-hover": "var(--color-primary-hover)",
         "primary-muted": "var(--color-primary-muted)",
         surface: "var(--color-surface)",
+        "surface-secondary": "var(--color-surface-secondary)",
         background: "var(--color-background)",
         tertiary: "var(--color-tertiary)",
         border: "var(--color-border)",
@@ -23,6 +24,7 @@ const config: Config = {
       fontFamily: {
         sans: ["var(--font-sans)"],
         mono: ["var(--font-mono)"],
+        display: ["var(--font-display)"],
       },
       fontSize: {
         xs: "var(--text-xs)",
@@ -38,6 +40,7 @@ const config: Config = {
         md: "var(--radius-md)",
         lg: "var(--radius-lg)",
         xl: "var(--radius-xl)",
+        "2xl": "var(--radius-2xl)",
         full: "var(--radius-full)",
       },
       boxShadow: {

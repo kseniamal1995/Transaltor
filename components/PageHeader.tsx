@@ -14,7 +14,7 @@ interface PageHeaderProps {
 export function PageHeader({ title, subtitle }: PageHeaderProps) {
   return (
     <header className="flex flex-col gap-3 text-center w-full">
-      <h1 className="text-2xl font-semibold text-text leading-normal md:text-3xl">
+      <h1 className="font-display font-normal text-[28px] leading-tight text-text md:text-[32px]">
         {title}
       </h1>
       {subtitle && (

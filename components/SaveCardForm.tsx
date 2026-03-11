@@ -44,7 +44,7 @@ export function SaveCardForm({
             type="button"
             onClick={onSave}
             disabled={isSaving}
-            className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+            className="flex-1 px-4 py-3 text-base font-bold text-white bg-[var(--color-primary)] rounded-xl hover:bg-[var(--color-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isSaving ? t("card_saving") : t("card_save")}
           </button>
@@ -53,7 +53,7 @@ export function SaveCardForm({
               type="button"
               onClick={onCancel}
               disabled={isSaving}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              className="px-4 py-3 text-base font-medium text-text-secondary bg-surface border border-border rounded-xl hover:bg-surface-secondary disabled:opacity-50 transition-colors"
             >
               {t("card_cancel")}
             </button>

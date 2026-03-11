@@ -1,0 +1,44 @@
+---
+description: Основной контекст проекта. Загружается всегда.
+globs:
+alwaysApply: true
+---
+
+# Контекст проекта
+
+## Стек
+- Next.js 15 (App Router)
+- React 19
+- TypeScript 5 (strict)
+- Tailwind CSS 3
+- Clerk (авторизация)
+- Upstash Redis (rate limiting)
+- DeepL Free API (перевод)
+- tinyld (определение языка на клиенте)
+
+## Структура
+```
+app/                  # Next.js App Router: pages, layouts, API routes
+  api/translate/      # Серверный прокси для DeepL
+components/           # React-компоненты (один файл = один компонент)
+  icons/              # SVG-иконки как компоненты
+lib/                  # Утилиты, хелперы, конфиги
+  storage.ts          # CRUD для localStorage (карточки, словари, история)
+  strings.ts          # i18n строки (ru, en)
+  languages.ts        # Языки, флаги, нормализация кодов
+  translate.ts        # Клиентская обёртка API перевода
+  constants.ts        # Константы (ключи localStorage, ID)
+  design-tokens.css   # CSS-переменные (цвета, шрифты, отступы)
+types/                # TypeScript типы (Card, Deck, User, etc.)
+```
+
+## Ключевые соглашения
+- Named export (не default)
+- Все данные в localStorage, привязаны к userId
+- UI-строки через `t("key")` из `lib/strings.ts`
+- Дизайн-токены через CSS-переменные в `design-tokens.css`
+- Tailwind классы используют токены: `text-text`, `bg-surface`, `border-border`
+
+## Критично
+- **Перед изменениями читай `FUNCTIONALITY.md`** — не удаляй и не добавляй функционал без запроса
+- Все цвета — из дизайн-токенов, не хардкод

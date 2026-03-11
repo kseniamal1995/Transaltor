@@ -62,11 +62,11 @@ export function HistoryItem({
   const displayTranslation = customTranslation.trim() || translation;
 
   return (
-    <article className="p-4 bg-white rounded-lg border border-gray-200 relative">
+    <article className="p-4 bg-surface rounded-xl border border-border relative">
       <button
         type="button"
         onClick={onDelete}
-        className="absolute top-4 right-4 p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+        className="absolute top-4 right-4 p-1.5 text-text-secondary hover:text-[var(--color-error)] hover:bg-red-50 rounded-xl transition-colors"
         aria-label={t("history_delete_aria")}
       >
         <TrashIcon size={18} />
@@ -74,23 +74,24 @@ export function HistoryItem({
       <div className="flex flex-col gap-2 pr-8">
         {!showForm ? (
           <>
-            <p className="text-gray-900 font-medium">{foreign}</p>
-            <p className="text-gray-600">{displayTranslation}</p>
+            <p className="text-base font-medium text-text">{foreign}</p>
+            <p className="text-base text-text-secondary">{displayTranslation}</p>
             <button
               type="button"
               onClick={() => setShowForm(true)}
-              className="self-start px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+              className="self-start px-3 py-1.5 text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] hover:bg-[var(--color-primary-muted)] rounded-xl transition-colors"
             >
               {t("card_save_title")}
             </button>
           </>
         ) : (
           <>
-            <div className="p-4 bg-surface border border-border rounded-xl">
+            <div className="bg-surface-secondary border border-border rounded-xl">
               <TranslationCard
                 defaultTranslation={translation}
                 customTranslation={customTranslation}
                 onCustomTranslationChange={setCustomTranslation}
+                lang={foreignLanguage}
               />
             </div>
             <SaveCardForm

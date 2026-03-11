@@ -10,6 +10,7 @@ interface TranslateResultProps {
   customTranslation?: string;
   onCustomTranslationChange?: (value: string) => void;
   onRetry?: () => void;
+  lang?: string;
 }
 
 export function TranslateResult({
@@ -19,53 +20,54 @@ export function TranslateResult({
   customTranslation = "",
   onCustomTranslationChange = () => {},
   onRetry,
+  lang = "en",
 }: TranslateResultProps) {
-  if (isLoading) {
-    return (
-      <section aria-label={t("result_aria")} className="mt-0 flex items-center justify-center min-h-[110px]">
-        <div className="flex items-center gap-2 text-gray-500">
-          <span
-            className="inline-block w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"
-            aria-hidden
-          />
-          <span>{t("result_loading")}</span>
-        </div>
-      </section>
-    );
-  }
-
-  if (error) {
-    return (
-      <section aria-label={t("result_error_aria")} className="mt-0 flex flex-col gap-3 justify-center min-h-[110px]">
-        <p className="p-4 text-[var(--color-error)] bg-red-50 rounded-lg border border-red-200">
-          {error}
-        </p>
-        {onRetry && (
-          <button
-            type="button"
-            onClick={onRetry}
-            className="self-start px-4 py-2 text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] transition-colors"
-          >
-            {t("result_retry")}
-          </button>
-        )}
-      </section>
-    );
-  }
-
-  if (!translatedText) {
-    return null;
-  }
-
   return (
-    <section aria-label={t("result_aria")} className="mt-0">
-      <article className="p-4 min-h-[110px] bg-surface border border-border rounded-xl">
+    <section
+      aria-label={error ? t("result_error_aria") : t("result_aria")}
+      className="bg-surface-secondary border border-border rounded-xl min-h-[132px]"
+    >
+      {isLoading && (
+        <div className="flex items-center justify-center min-h-[132px]">
+          <div className="flex items-center gap-2 text-text-secondary">
+            <span
+              className="inline-block w-5 h-5 border-2 border-text-secondary border-t-transparent rounded-full animate-spin"
+              aria-hidden
+            />
+            <span className="text-base">{t("result_loading")}</span>
+          </div>
+        </div>
+      )}
+
+      {!isLoading && error && (
+        <div className="flex flex-col gap-3 justify-center min-h-[132px] p-4">
+          <p className="text-[var(--color-error)]">{error}</p>
+          {onRetry && (
+            <button
+              type="button"
+              onClick={onRetry}
+              className="self-start text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] transition-colors"
+            >
+              {t("result_retry")}
+            </button>
+          )}
+        </div>
+      )}
+
+      {!isLoading && !error && !translatedText && (
+        <div className="flex items-start pt-3 pl-4 pr-3 pb-4 min-h-[132px]">
+          <p className="text-base text-text-secondary">{t("result_placeholder")}</p>
+        </div>
+      )}
+
+      {!isLoading && !error && translatedText && (
         <TranslationCard
           defaultTranslation={translatedText}
           customTranslation={customTranslation}
           onCustomTranslationChange={onCustomTranslationChange}
+          lang={lang}
         />
-      </article>
+      )}
     </section>
   );
 }

@@ -1,66 +1,118 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { t } from "@/lib/strings";
+import { SpeakButton } from "./SpeakButton";
 
 interface TranslationCardProps {
   defaultTranslation: string;
   customTranslation: string;
   onCustomTranslationChange: (value: string) => void;
+  lang?: string;
   placeholder?: string;
+}
+
+function CopyIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+    </svg>
+  );
 }
 
 export function TranslationCard({
   defaultTranslation,
   customTranslation,
   onCustomTranslationChange,
+  lang = "en",
   placeholder = t("card_custom_placeholder"),
 }: TranslationCardProps) {
-  const [isCustomChecked, setIsCustomChecked] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const displayTranslation = customTranslation.trim() || defaultTranslation;
+  const [isCustomEnabled, setIsCustomEnabled] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (isCustomChecked) inputRef.current?.focus();
-  }, [isCustomChecked]);
+    if (isCustomEnabled) inputRef.current?.focus();
+  }, [isCustomEnabled]);
 
-  function handleCheckboxChange(checked: boolean) {
-    setIsCustomChecked(checked);
-    if (!checked) {
-      onCustomTranslationChange("");
+  useLayoutEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  }, [customTranslation, isCustomEnabled]);
+
+  function handleToggle() {
+    const next = !isCustomEnabled;
+    setIsCustomEnabled(next);
+    if (!next) onCustomTranslationChange("");
+  }
+
+  async function handleCopy() {
+    const text = (isCustomEnabled && customTranslation.trim()) ? customTranslation : defaultTranslation;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // clipboard not available
     }
   }
 
+  const displayText = (isCustomEnabled && customTranslation.trim()) ? customTranslation : defaultTranslation;
+
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-sm text-text-secondary">{t("card_translation_label")}</span>
-        <label className="flex items-center gap-2 shrink-0 cursor-pointer text-text-secondary hover:text-text transition-colors">
-          <input
-            type="checkbox"
-            checked={isCustomChecked}
-            onChange={(e) => handleCheckboxChange(e.target.checked)}
-            className="w-4 h-4 rounded border-border text-[var(--color-primary)] focus:ring-[var(--color-primary)]"
-          />
-          <span className="text-sm">{t("card_custom_label")}</span>
-        </label>
+    <div className="flex flex-col gap-10 pt-3 pl-4 pr-3 pb-4">
+      <div className="grid py-1">
+        <p className={`col-start-1 row-start-1 text-base font-normal leading-normal text-text-secondary ${isCustomEnabled ? "invisible pointer-events-none" : ""}`}>
+          {defaultTranslation}
+        </p>
+        <textarea
+          ref={inputRef}
+          value={customTranslation}
+          onChange={(e) => onCustomTranslationChange(e.target.value)}
+          placeholder={placeholder}
+          rows={1}
+          className={`col-start-1 row-start-1 w-full p-0 bg-transparent resize-none overflow-hidden text-base font-normal leading-normal text-text-secondary placeholder:text-text-secondary focus:outline-none ${!isCustomEnabled ? "invisible pointer-events-none" : ""}`}
+        />
       </div>
-      <div className="min-h-[44px]">
-        {isCustomChecked ? (
-          <>
-            <p className="text-sm text-text-secondary/80 mb-2">{defaultTranslation}</p>
-            <input
-              ref={inputRef}
-              type="text"
-              value={customTranslation}
-              onChange={(e) => onCustomTranslationChange(e.target.value)}
-              placeholder={placeholder}
-              className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-[var(--color-background)] text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+
+      <div className="flex items-center gap-2 pr-1">
+        <div className="flex flex-1 items-center gap-1">
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="p-1 rounded-xl text-text-secondary hover:text-text transition-colors"
+            aria-label="Копировать перевод"
+            title={copied ? "Скопировано!" : "Копировать"}
+          >
+            <CopyIcon className={`w-6 h-6 ${copied ? "text-primary" : ""}`} />
+          </button>
+          <SpeakButton text={displayText} lang={lang} iconOnly />
+        </div>
+
+        <div className="flex items-center gap-3 shrink-0">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={isCustomEnabled}
+            onClick={handleToggle}
+            className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)] focus-visible:ring-offset-2 ${
+              isCustomEnabled ? "bg-[var(--color-primary)]" : "bg-tertiary"
+            }`}
+            aria-label={t("card_custom_label")}
+          >
+            <span
+              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                isCustomEnabled ? "translate-x-5" : "translate-x-0"
+              }`}
             />
-          </>
-        ) : (
-          <p className="text-base font-normal text-text">{displayTranslation}</p>
-        )}
+          </button>
+          <span className="text-base font-medium text-text-secondary whitespace-nowrap">
+            {t("card_custom_label")}
+          </span>
+        </div>
       </div>
     </div>
   );

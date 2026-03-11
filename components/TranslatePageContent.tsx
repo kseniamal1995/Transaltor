@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useUser } from "@clerk/nextjs";
 import {
   addToHistory,
   createDeck,
@@ -14,11 +15,17 @@ import {
 } from "@/lib/languages";
 import { translate } from "@/lib/translate";
 import { STORAGE_KEYS } from "@/lib/constants";
+import {
+  canTranslate,
+  incrementGuestUsage,
+  getRemainingTranslations,
+} from "@/lib/usageLimit";
 import { TranslateInput } from "./TranslateInput";
 import { TranslateResult } from "./TranslateResult";
 import { SaveCardForm } from "./SaveCardForm";
 import { LanguagePairBlock } from "./LanguagePairBlock";
 import { PageHeader } from "./PageHeader";
+import { TranslationLimitBanner } from "./TranslationLimitBanner";
 import { t } from "@/lib/strings";
 
 const MIN_CHARS_TO_TRANSLATE = 2;
@@ -41,6 +48,9 @@ function getLangPair(sourceLang: string, targetLang: string): string {
 }
 
 export function TranslatePageContent() {
+  const { isSignedIn } = useUser();
+  const isLoggedIn = isSignedIn === true;
+
   const [inputValue, setInputValue] = useState("");
   const [sourceLang, setSourceLang] = useState("en");
   const [targetLang, setTargetLang] = useState(() => getStoredLastTargetLang());
@@ -54,6 +64,12 @@ export function TranslatePageContent() {
   const [customTranslation, setCustomTranslation] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
+  const [remaining, setRemaining] = useState<number>(() => getRemainingTranslations(isLoggedIn));
+
+  // Обновлять остаток при изменении статуса авторизации
+  useEffect(() => {
+    setRemaining(getRemainingTranslations(isLoggedIn));
+  }, [isLoggedIn]);
 
   // Загрузка словарей. Повторяем с задержкой: GuestUserSync/ClerkUserSync могут ещё не успеть установить user.
   useEffect(() => {
@@ -91,6 +107,12 @@ export function TranslatePageContent() {
         return;
       }
 
+      if (!canTranslate(isLoggedIn)) {
+        setError(t("limit_reached_error").replace("{n}", String(20)));
+        setRemaining(0);
+        return;
+      }
+
       setIsLoading(true);
       setError(null);
       setSourceText(trimmed);
@@ -106,6 +128,11 @@ export function TranslatePageContent() {
         setCustomTranslation("");
         if (sourceLang === "auto") {
           setSourceLang(langToSave);
+        }
+
+        if (!isLoggedIn) {
+          incrementGuestUsage();
+          setRemaining(getRemainingTranslations(false));
         }
 
         const user = getCurrentUser();
@@ -219,8 +246,6 @@ export function TranslatePageContent() {
     }
   }
 
-  const showTranslationBlock = isLoading || error || translatedText;
-
   return (
     <div className="px-6 py-6 max-w-[600px] mx-auto flex flex-col gap-4 md:px-8 md:gap-10">
       <PageHeader
@@ -229,7 +254,7 @@ export function TranslatePageContent() {
       />
 
       <div className="flex flex-col gap-4">
-        <div className="bg-surface border border-border rounded-xl overflow-hidden" data-lang-card>
+        <div className="border border-border rounded-2xl px-3 pb-3" data-lang-card>
           <LanguagePairBlock
             sourceLang={sourceLang}
             targetLang={targetLang}
@@ -237,31 +262,37 @@ export function TranslatePageContent() {
             onTargetChange={handleTargetChange}
             onSwap={handleSwap}
           />
-          <TranslateInput
-            value={inputValue}
-            onChange={setInputValue}
-            onTranslate={() => {
-              const trimmed = inputValue.trim();
-              if (trimmed.length >= MIN_CHARS_TO_TRANSLATE) runTranslate(trimmed);
-            }}
-            disabled={isLoading}
-            placeholder={t("translate_placeholder")}
-          />
+          <div className="flex flex-col gap-3">
+            <div className="bg-surface border border-border rounded-xl min-h-[132px]">
+              <TranslateInput
+                value={inputValue}
+                onChange={setInputValue}
+                onTranslate={() => {
+                  const trimmed = inputValue.trim();
+                  if (trimmed.length >= MIN_CHARS_TO_TRANSLATE) runTranslate(trimmed);
+                }}
+                disabled={isLoading}
+                placeholder={t("translate_placeholder")}
+                lang={sourceLang}
+              />
+            </div>
+
+            <TranslateResult
+              isLoading={isLoading}
+              error={error}
+              translatedText={translatedText}
+              customTranslation={customTranslation}
+              onCustomTranslationChange={setCustomTranslation}
+              onRetry={() => {
+                const trimmed = inputValue.trim();
+                if (trimmed.length >= MIN_CHARS_TO_TRANSLATE) runTranslate(trimmed);
+              }}
+              lang={targetLang}
+            />
+          </div>
         </div>
 
-        {showTranslationBlock && (
-          <TranslateResult
-            isLoading={isLoading}
-            error={error}
-            translatedText={translatedText}
-            customTranslation={customTranslation}
-            onCustomTranslationChange={setCustomTranslation}
-            onRetry={() => {
-              const trimmed = inputValue.trim();
-              if (trimmed.length >= MIN_CHARS_TO_TRANSLATE) runTranslate(trimmed);
-            }}
-          />
-        )}
+        {!isLoggedIn && <TranslationLimitBanner remaining={remaining} />}
 
         {translatedText && sourceText && decks.length > 0 && (
           <>
