@@ -11,6 +11,7 @@ import {
 import { ALL_CARDS_DECK_ID } from "@/lib/constants";
 import { t } from "@/lib/strings";
 import { getLanguageName } from "@/lib/languages";
+import { PAGE_LAYOUT_CLASSES, BACK_LINK_CLASSES } from "@/lib/ui-classes";
 import { IconButton } from "./IconButton";
 import { TrashIcon } from "./icons/TrashIcon";
 
@@ -58,56 +59,56 @@ export function DeckEditContent({ deckId, lang }: DeckEditContentProps) {
 
   if (!deck) {
     return (
-      <div className="p-4">
-        <p className="text-text-muted">{t("deck_not_found")}</p>
-        <Link href="/decks" className="mt-4 text-[var(--color-primary)] hover:underline">
+      <div className={`${PAGE_LAYOUT_CLASSES} gap-4`}>
+        <p className="text-text-secondary">{t("deck_not_found")}</p>
+        <Link href="/decks" className={BACK_LINK_CLASSES}>
           {t("deck_back_to_list")}
         </Link>
       </div>
     );
   }
 
-  const backHref = lang ? `/deck/${deckId}?lang=${encodeURIComponent(lang)}` : `/deck/${deckId}`;
   const displayTranslation = (card: CardItem) => card.customTranslation || card.translation;
 
   return (
-    <div className="p-4 max-w-xl mx-auto">
-      <Link href={backHref} className="inline-block mb-4 text-sm text-[var(--color-primary)] hover:underline">
-        {t("deck_back_to_deck")}
+    <div className={`${PAGE_LAYOUT_CLASSES} gap-6`}>
+      <Link href="/decks" className={BACK_LINK_CLASSES}>
+        {t("deck_back_to_study")}
       </Link>
 
-      <header className="mb-6">
-        <h1 className="font-display text-2xl font-bold text-text">{deck.name}</h1>
+      <header>
+        <h1 className="font-display text-2xl font-normal text-text leading-normal md:text-3xl">
+          {deck.name}
+        </h1>
       </header>
 
       {cards.length > 0 ? (
         <ul className="flex flex-col gap-3" aria-label={t("deck_cards_aria")}>
           {cards.map((card) => (
-            <li
-              key={card.id}
-              className="p-4 bg-surface rounded-xl border border-border relative"
-            >
-              <IconButton
-                onClick={() => handleDeleteCard(card.id)}
-                ariaLabel={t("deck_delete_card_aria")}
-                className="absolute top-4 right-4 hover:text-[var(--color-error)] hover:bg-[var(--color-primary-muted)]"
-              >
-                <TrashIcon size={18} />
-              </IconButton>
-              <div className="pr-10">
-                <p className="font-medium text-text">{card.foreign}</p>
-                <p className="text-text-secondary mt-1">{displayTranslation(card)}</p>
-                {card.foreignLanguage && (
-                  <span className="text-xs text-text-muted mt-1 block">
-                    {getLanguageName(card.foreignLanguage)}
-                  </span>
-                )}
-              </div>
+            <li key={card.id} className="relative">
+              <article className="p-4 bg-surface rounded-xl border border-border relative">
+                <IconButton
+                  onClick={() => handleDeleteCard(card.id)}
+                  ariaLabel={t("deck_delete_card_aria")}
+                  className="absolute top-4 right-4 hover:text-[var(--color-error)] hover:bg-[var(--color-primary-muted)]"
+                >
+                  <TrashIcon size={18} />
+                </IconButton>
+                <div className="pr-10">
+                  <p className="font-medium text-text">{card.foreign}</p>
+                  <p className="text-text-secondary mt-1">{displayTranslation(card)}</p>
+                  {card.foreignLanguage && (
+                    <span className="text-xs text-text-muted mt-1 block">
+                      {getLanguageName(card.foreignLanguage)}
+                    </span>
+                  )}
+                </div>
+              </article>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-text-muted">{t("deck_no_cards_yet")}</p>
+        <p className="text-text-secondary">{t("deck_no_cards_yet")}</p>
       )}
     </div>
   );

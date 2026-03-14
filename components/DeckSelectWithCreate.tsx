@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import type { Deck } from "@/types";
+import { ALL_CARDS_DECK_ID } from "@/lib/constants";
 import { t } from "@/lib/strings";
 import { Button } from "./Button";
 import { ChevronDownIcon } from "./icons/ChevronDownIcon";
@@ -113,7 +114,7 @@ export function DeckSelectWithCreate({
         aria-haspopup="listbox"
         aria-expanded={open}
       >
-        <span className="truncate">{selectedDeck?.name ?? ""}</span>
+        <span className="truncate">{selectedDeck?.id === ALL_CARDS_DECK_ID ? t("decks_all_cards") : (selectedDeck?.name ?? "")}</span>
         <ChevronDownIcon
           className={`w-5 h-5 shrink-0 text-text-secondary transition-transform ${open ? "rotate-180" : ""}`}
         />
@@ -154,7 +155,7 @@ export function DeckSelectWithCreate({
                       <CheckIcon className="w-4 h-4 text-[var(--color-primary)]" />
                     )}
                   </span>
-                  <span className="truncate">{deck.name}</span>
+                  <span className="truncate">{deck.id === ALL_CARDS_DECK_ID ? t("decks_all_cards") : deck.name}</span>
                 </li>
               ))}
             </ul>

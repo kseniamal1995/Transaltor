@@ -241,11 +241,12 @@ function LanguageCard({ languages, selected, onSelect, totalWords, totalLearned,
 
 /* ───────── Дропдаун ⋮ для кастомного словаря ───────── */
 interface DeckMenuProps {
-  onRename: () => void;
+  deckId: string;
+  lang: string;
   onDelete: () => void;
 }
 
-function DeckMenu({ onRename, onDelete }: DeckMenuProps) {
+function DeckMenu({ deckId, lang, onDelete }: DeckMenuProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -271,6 +272,8 @@ function DeckMenu({ onRename, onDelete }: DeckMenuProps) {
     action();
   }
 
+  const editHref = `/deck/${deckId}/edit${lang ? `?lang=${encodeURIComponent(lang)}` : ""}`;
+
   return (
     <div ref={ref} className="relative">
       <IconButton
@@ -283,13 +286,13 @@ function DeckMenu({ onRename, onDelete }: DeckMenuProps) {
 
       {open && (
         <div className="absolute right-0 top-full mt-1 z-50 bg-surface border border-border rounded-xl shadow-md py-1 min-w-[160px]">
-          <button
-            type="button"
-            onClick={(e) => pick(e, onRename)}
-            className="w-full text-left px-4 py-2.5 text-sm text-text hover:bg-tertiary transition-colors"
+          <Link
+            href={editHref}
+            className="block w-full text-left px-4 py-2.5 text-sm text-text hover:bg-tertiary transition-colors"
+            onClick={() => setOpen(false)}
           >
             {t("deck_menu_rename")}
-          </button>
+          </Link>
           <button
             type="button"
             onClick={(e) => pick(e, onDelete)}
@@ -420,7 +423,8 @@ export function DecksPageContent() {
                       </span>
                       <div className="shrink-0" onClick={(e) => e.preventDefault()}>
                         <DeckMenu
-                          onRename={() => handleRename(deck.id, deck.name)}
+                          deckId={deck.id}
+                          lang={selectedLang}
                           onDelete={() => handleDelete(deck.id, deck.name)}
                         />
                       </div>
@@ -436,7 +440,7 @@ export function DecksPageContent() {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-6 p-8 rounded-2xl border border-border bg-surface text-center">
+            <div className="flex flex-col items-center gap-6 p-8 rounded-2xl border border-border text-center">
               <EmptyStateIllustration className="w-[68px] h-[68px] text-text-muted" />
               <p className="text-base text-text-secondary leading-6 whitespace-pre-line">
                 {t("decks_no_custom_decks")}

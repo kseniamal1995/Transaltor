@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 import {
   addToHistory,
@@ -64,7 +64,15 @@ export function TranslatePageContent() {
   const [customTranslation, setCustomTranslation] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
+  const savedMessageTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [remaining, setRemaining] = useState<number>(() => getRemainingTranslations(isLoggedIn));
+
+  // Очистка таймера сообщения «Карточка сохранена» при размонтировании
+  useEffect(() => {
+    return () => {
+      if (savedMessageTimeoutRef.current) clearTimeout(savedMessageTimeoutRef.current);
+    };
+  }, []);
 
   // Обновлять остаток при изменении статуса авторизации
   useEffect(() => {
@@ -230,6 +238,10 @@ export function TranslatePageContent() {
 
     setIsSaving(true);
     setSavedMessage(null);
+    if (savedMessageTimeoutRef.current) {
+      clearTimeout(savedMessageTimeoutRef.current);
+      savedMessageTimeoutRef.current = null;
+    }
 
     try {
       saveCard(user.id, {
@@ -241,6 +253,7 @@ export function TranslatePageContent() {
       });
       setSavedMessage(t("card_saved"));
       setCustomTranslation("");
+      savedMessageTimeoutRef.current = setTimeout(() => setSavedMessage(null), 5000);
     } finally {
       setIsSaving(false);
     }
@@ -296,9 +309,6 @@ export function TranslatePageContent() {
 
         {translatedText && sourceText && decks.length > 0 && (
           <>
-            {savedMessage && (
-              <p className="text-sm text-[var(--color-success)] font-medium">{savedMessage}</p>
-            )}
             <SaveCardForm
               key={`${sourceText}-${translatedText}`}
               decks={decks}
@@ -309,6 +319,9 @@ export function TranslatePageContent() {
               onSave={handleSaveCard}
               isSaving={isSaving}
             />
+            {savedMessage && (
+              <p className="text-sm text-[var(--color-success)] font-medium">{savedMessage}</p>
+            )}
           </>
         )}
       </div>
