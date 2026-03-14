@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { t } from "@/lib/strings";
+import { IconButton } from "./IconButton";
 
 const LANG_MAP: Record<string, string> = {
   en: "en-US",
@@ -42,12 +43,10 @@ export function SpeakButton({ text, lang = "en", iconOnly = false }: SpeakButton
 
   if (iconOnly) {
     return (
-      <button
-        type="button"
+      <IconButton
         onClick={handleSpeak}
         disabled={isSpeaking}
-        className="p-[6px] rounded-xl text-text-secondary hover:bg-tertiary disabled:opacity-50 transition-colors"
-        aria-label={t("study_speak_aria")}
+        ariaLabel={t("study_speak_aria")}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -63,7 +62,7 @@ export function SpeakButton({ text, lang = "en", iconOnly = false }: SpeakButton
           <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
           <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
         </svg>
-      </button>
+      </IconButton>
     );
   }
 

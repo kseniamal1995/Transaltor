@@ -2,6 +2,7 @@
 
 import type { Deck } from "@/types";
 import { DeckSelectWithCreate } from "./DeckSelectWithCreate";
+import { Button } from "./Button";
 import { t } from "@/lib/strings";
 
 interface SaveCardFormProps {
@@ -40,14 +41,9 @@ export function SaveCardForm({
           onDeckCreated={onDeckCreated}
         />
 
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={isSaving}
-          className="shrink-0 px-4 py-3 text-base font-bold text-white bg-[var(--color-primary)] rounded-xl hover:bg-[var(--color-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
+        <Button onClick={onSave} disabled={isSaving} className="shrink-0 font-bold">
           {isSaving ? t("card_saving") : t("card_save")}
-        </button>
+        </Button>
       </div>
     </section>
   );

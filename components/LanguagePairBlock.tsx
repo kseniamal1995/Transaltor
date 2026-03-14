@@ -4,31 +4,9 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { SUPPORTED_LANGUAGES, getFlagUrl, getLanguageName, getLangSelectMaxWidth } from "@/lib/languages";
 import { t, getLocale } from "@/lib/strings";
-
-interface LanguagePairBlockProps {
-  sourceLang: string;
-  targetLang: string;
-  onSourceChange: (code: string) => void;
-  onTargetChange: (code: string) => void;
-  onSwap: () => void;
-}
-
-function ChevronDownIcon({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M6 9l6 6 6-6" />
-    </svg>
-  );
-}
-
-function SearchIcon({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <circle cx="11" cy="11" r="8" />
-      <path d="m21 21-4.35-4.35" />
-    </svg>
-  );
-}
+import { IconButton } from "./IconButton";
+import { ChevronDownIcon } from "./icons/ChevronDownIcon";
+import { SearchIcon } from "./icons/SearchIcon";
 
 const DROPDOWN_EXCLUDED = new Set(["auto", "st"]);
 
@@ -55,7 +33,7 @@ function FlagIcon({ code, ariaHidden = true }: { code: string; ariaHidden?: bool
     <img
       src={url}
       alt=""
-      className="shrink-0 w-5 h-5 rounded-full"
+      className="shrink-0 w-5 h-5 rounded-full outline outline-[1px] outline-[var(--color-border)]"
       width={20}
       height={20}
       aria-hidden={ariaHidden}
@@ -221,7 +199,7 @@ function LangSelect({
           aria-activedescendant={open && filteredOptions[Math.max(0, focusedIndex)] ? `lang-option-${filteredOptions[Math.max(0, focusedIndex)].code}` : undefined}
         >
           <span className="min-w-0 truncate text-left">{selectedOption.name}</span>
-          <ChevronDownIcon className="w-4 h-4 shrink-0 text-text-muted" />
+          <ChevronDownIcon className={`w-4 h-4 shrink-0 text-text-muted transition-transform ${open ? "rotate-180" : ""}`} />
         </button>
 
         {open &&
@@ -307,6 +285,14 @@ function LangSelect({
   );
 }
 
+interface LanguagePairBlockProps {
+  sourceLang: string;
+  targetLang: string;
+  onSourceChange: (code: string) => void;
+  onTargetChange: (code: string) => void;
+  onSwap: () => void;
+}
+
 export function LanguagePairBlock({
   sourceLang,
   targetLang,
@@ -340,11 +326,11 @@ export function LanguagePairBlock({
         />
       </div>
 
-      <button
-        type="button"
+      <IconButton
         onClick={onSwap}
-        className="flex-shrink-0 p-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white rounded-xl transition-colors"
-        aria-label={t("lang_swap_aria")}
+        variant="primary"
+        ariaLabel={t("lang_swap_aria")}
+        className="flex-shrink-0"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -361,7 +347,7 @@ export function LanguagePairBlock({
           <path d="M8 21l-4-4 4-4" />
           <path d="M4 17h16" />
         </svg>
-      </button>
+      </IconButton>
 
       <div className="flex-1 flex justify-center items-center min-w-0">
         <LangSelect

@@ -6,6 +6,7 @@ import { HistoryItem } from "./HistoryItem";
 import { PageHeader } from "./PageHeader";
 import { EmptyStateIllustration } from "./EmptyStateIllustration";
 import { t } from "@/lib/strings";
+import { PAGE_LAYOUT_CLASSES } from "@/lib/ui-classes";
 
 export function HistoryPageContent() {
   const [history, setHistory] = useState<
@@ -26,7 +27,7 @@ export function HistoryPageContent() {
   }, []);
 
   return (
-    <div className="px-6 py-6 max-w-[600px] mx-auto flex flex-col gap-8 md:px-8">
+    <div className={`${PAGE_LAYOUT_CLASSES} gap-8`}>
       <PageHeader title={t("history_title")} />
 
       {history.length === 0 ? (

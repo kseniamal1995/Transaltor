@@ -3,6 +3,8 @@
 import { useRef, useLayoutEffect } from "react";
 import { t } from "@/lib/strings";
 import { SpeakButton } from "./SpeakButton";
+import { IconButton } from "./IconButton";
+import { XIcon } from "./icons/XIcon";
 
 interface TranslateInputProps {
   value: string;
@@ -12,15 +14,6 @@ interface TranslateInputProps {
   disabled?: boolean;
   placeholder?: string;
   lang?: string;
-}
-
-function XIcon({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M18 6 6 18" />
-      <path d="m6 6 12 12" />
-    </svg>
-  );
 }
 
 export function TranslateInput({
@@ -67,15 +60,14 @@ export function TranslateInput({
           className="flex-1 text-base font-normal text-text placeholder:text-text-secondary resize-none overflow-hidden focus:outline-none disabled:cursor-not-allowed bg-transparent"
         />
         {value && (
-          <button
-            type="button"
+          <IconButton
             onClick={() => onChange("")}
             disabled={disabled}
-            className={`shrink-0 p-1 rounded-xl text-text-secondary hover:text-text transition-colors ${disabled ? "invisible" : ""}`}
-            aria-label="Очистить"
+            ariaLabel="Очистить"
+            className={`shrink-0 ${disabled ? "invisible" : ""}`}
           >
-            <XIcon className="w-6 h-6" />
-          </button>
+            <XIcon className="w-5 h-5" />
+          </IconButton>
         )}
       </div>
 

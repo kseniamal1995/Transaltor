@@ -10,12 +10,15 @@
   --color-primary: #5fd285;           /* BG / Accent */
   --color-primary-hover: #45be6d;     /* BG / Accent Hover */
   --color-primary-muted: #e8f5ec;
+  --color-primary-surface: #f2f9f4;   /* BG / Accent Surface — фон карточки "Все слова" */
+  --color-primary-border: #c9eed5;    /* Stroke / Accent — бордер карточки "Все слова" */
 
   --color-background: #fdfbf9;        /* BG / Main */
   --color-surface: #ffffff;           /* BG / Primary */
   --color-surface-secondary: #f8f4f1; /* BG / Secondary */
   --color-tertiary: #e6e2dc;          /* BG / Tertiary */
   --color-border: #dad9d5;            /* Stroke / Primary */
+  --color-border-hover: #c6c5be;      /* Stroke / Primary Hover */
 
   --color-text: #1e2e26;              /* Content/Primary */
   --color-text-secondary: #7a7c79;    /* Content/Secondary */
@@ -31,6 +34,7 @@
   --figma-bg-tertiary: #e6e2dc;
   --figma-bg-accent: #5fd285;
   --figma-stroke-primary: #dad9d5;
+  --figma-stroke-primary-hover: #c6c5be;
   --figma-content-primary: #1e2e26;
   --figma-content-secondary: #7a7c79;
   --figma-icon-default: #667085;

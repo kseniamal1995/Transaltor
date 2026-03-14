@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import Link from "next/link";
+import { getButtonClassName, Button } from "./Button";
+import { PAGE_LAYOUT_CLASSES, BACK_LINK_CLASSES } from "@/lib/ui-classes";
 import {
   getCurrentUser,
   getDecksForUser,
@@ -137,9 +139,9 @@ export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
 
   if (!deck) {
     return (
-      <div className="px-6 py-6 max-w-[600px] mx-auto flex flex-col gap-4 md:px-8">
+      <div className={`${PAGE_LAYOUT_CLASSES} gap-4`}>
         <p className="text-text-secondary">{t("deck_not_found")}</p>
-        <Link href="/decks" className="inline-flex items-center gap-1 text-sm text-text-secondary hover:text-text hover:underline w-fit">
+        <Link href="/decks" className={BACK_LINK_CLASSES}>
           {t("deck_back_to_list")}
         </Link>
       </div>
@@ -148,12 +150,9 @@ export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
 
   if (sessionComplete) {
     return (
-      <div className="px-6 py-6 max-w-[600px] mx-auto flex flex-col items-center justify-center min-h-[60vh] gap-6 md:px-8">
-        <Link
-          href={lang ? `/deck/${deckId}?lang=${encodeURIComponent(lang)}` : `/deck/${deckId}`}
-          className="inline-flex items-center gap-1 text-sm text-text-secondary hover:text-text hover:underline w-fit"
-        >
-          {t("deck_back_to_deck")}
+      <div className={`${PAGE_LAYOUT_CLASSES} items-center justify-center min-h-[60vh] gap-6`}>
+        <Link href="/decks" className={BACK_LINK_CLASSES}>
+          {t("deck_back_to_list")}
         </Link>
         <h2 className="text-2xl font-semibold text-text md:text-3xl">Раунд завершён!</h2>
         <p className="text-text-secondary text-center">
@@ -166,7 +165,7 @@ export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
         />
         <Link
           href={lang ? `/deck/${deckId}/study?lang=${encodeURIComponent(lang)}` : `/deck/${deckId}/study`}
-          className="px-6 py-3 bg-[var(--color-primary)] text-white font-medium rounded-xl hover:bg-[var(--color-primary-hover)] transition-colors"
+          className={getButtonClassName("primary", "lg")}
         >
           Повторить
         </Link>
@@ -176,14 +175,11 @@ export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
 
   if (cards.length === 0) {
     return (
-      <div className="px-6 py-6 max-w-[600px] mx-auto flex flex-col gap-4 md:px-8">
-        <Link
-          href={lang ? `/deck/${deckId}?lang=${encodeURIComponent(lang)}` : `/deck/${deckId}`}
-          className="inline-flex items-center gap-1 text-sm text-text-secondary hover:text-text hover:underline w-fit"
-        >
-          {t("deck_back_to_deck")}
+      <div className={`${PAGE_LAYOUT_CLASSES} gap-4`}>
+        <Link href="/decks" className={BACK_LINK_CLASSES}>
+          {t("deck_back_to_list")}
         </Link>
-        <h1 className="text-2xl font-semibold text-text md:text-3xl">Режим изучения</h1>
+        <h1 className="font-display text-2xl font-semibold text-text md:text-3xl">Режим изучения</h1>
         <p className="text-text-secondary">
           {t("deck_empty_cards")}
         </p>
@@ -195,7 +191,7 @@ export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
 
   return (
     <div
-      className="px-6 py-6 max-w-[600px] mx-auto flex flex-col gap-6 min-h-screen md:px-8"
+      className={`${PAGE_LAYOUT_CLASSES} gap-6 min-h-screen`}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -203,13 +199,10 @@ export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
       tabIndex={0}
     >
       <header className="flex flex-col gap-3 shrink-0">
-        <Link
-          href={lang ? `/deck/${deckId}?lang=${encodeURIComponent(lang)}` : `/deck/${deckId}`}
-          className="inline-flex items-center gap-1 text-sm text-text-secondary hover:text-text hover:underline w-fit"
-        >
-          {t("deck_back_to_deck")}
+        <Link href="/decks" className={BACK_LINK_CLASSES}>
+          {t("deck_back_to_list")}
         </Link>
-        <h1 className="text-2xl font-semibold text-text leading-normal md:text-3xl">
+        <h1 className="font-display text-2xl font-normal text-text leading-normal md:text-3xl">
           {deck.name}
         </h1>
         <DeckProgressBar
@@ -222,32 +215,24 @@ export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
         </p>
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-center w-full min-h-0">
+      <main className="h-fit flex flex-col items-center justify-center w-full min-h-0">
         <StudyCard
           foreign={currentCard.foreign}
           translation={displayTranslation}
           isFlipped={isFlipped}
           onFlip={handleFlip}
           swipeOffset={swipeOffset}
-          className="w-full max-w-[400px]"
+          className="w-full"
         />
 
         {isFlipped && (
           <div className="mt-6 flex flex-wrap gap-3 justify-center">
-            <button
-              type="button"
-              onClick={() => handleSwipe(false)}
-              className="px-5 py-2.5 rounded-xl border border-border text-text font-medium hover:bg-[var(--color-tertiary)] transition-colors"
-            >
+            <Button variant="secondary" onClick={() => handleSwipe(false)}>
               ✗ Ещё раз
-            </button>
-            <button
-              type="button"
-              onClick={() => handleSwipe(true)}
-              className="px-5 py-2.5 rounded-xl bg-[var(--color-primary)] text-white font-medium hover:bg-[var(--color-primary-hover)] transition-colors"
-            >
+            </Button>
+            <Button onClick={() => handleSwipe(true)}>
               ✓ Выучено
-            </button>
+            </Button>
           </div>
         )}
 

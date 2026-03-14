@@ -1,18 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import type { Deck } from "@/types";
 import { t } from "@/lib/strings";
+import { Button } from "./Button";
+import { ChevronDownIcon } from "./icons/ChevronDownIcon";
+import { CheckIcon } from "./icons/CheckIcon";
 
 const CREATE_NEW_ID = "__create_new__";
-
-function ChevronDownIcon({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M5 7.5l5 5 5-5" />
-    </svg>
-  );
-}
 
 interface DeckSelectWithCreateProps {
   decks: Deck[];
@@ -31,72 +27,169 @@ export function DeckSelectWithCreate({
   onDeckCreated,
   className = "",
 }: DeckSelectWithCreateProps) {
-  const [showCreateInput, setShowCreateInput] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
   const [newDeckName, setNewDeckName] = useState("");
+  const [dropdownRect, setDropdownRect] = useState<{
+    rect: DOMRect;
+    openUp: boolean;
+    width: number;
+    left: number;
+  } | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const createInputRef = useRef<HTMLInputElement>(null);
 
-  function handleSelectChange(deckId: string) {
-    if (deckId === CREATE_NEW_ID) {
-      setShowCreateInput(true);
-      setNewDeckName("");
-    } else {
-      setShowCreateInput(false);
-      onChange(deckId);
-    }
+  const selectedDeck = decks.find((d) => d.id === value);
+
+  const updateDropdownPosition = useCallback(() => {
+    const trigger = triggerRef.current;
+    if (!trigger || !open) return;
+    const rect = trigger.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    const openUp = spaceBelow < 300 && spaceAbove > spaceBelow;
+    setDropdownRect({ rect, openUp, width: rect.width, left: rect.left });
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    updateDropdownPosition();
+  }, [open, updateDropdownPosition]);
+
+  useEffect(() => {
+    if (!open) return;
+    window.addEventListener("scroll", updateDropdownPosition, true);
+    window.addEventListener("resize", updateDropdownPosition);
+    return () => {
+      window.removeEventListener("scroll", updateDropdownPosition, true);
+      window.removeEventListener("resize", updateDropdownPosition);
+    };
+  }, [open, updateDropdownPosition]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (triggerRef.current?.contains(target)) return;
+      const dropdown = document.getElementById("deck-dropdown");
+      if (dropdown?.contains(target)) return;
+      setOpen(false);
+      setIsCreating(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
+  function handleSelect(deckId: string) {
+    onChange(deckId);
+    setOpen(false);
+    setIsCreating(false);
+  }
+
+  function handleStartCreate() {
+    setIsCreating(true);
+    setNewDeckName("");
+    setTimeout(() => createInputRef.current?.focus(), 0);
   }
 
   function handleCreate() {
     const trimmed = newDeckName.trim();
     if (!trimmed) return;
-
     const newDeck = onCreateDeck(trimmed);
     onDeckCreated?.(newDeck);
-    setShowCreateInput(false);
+    setIsCreating(false);
     setNewDeckName("");
     onChange(newDeck.id);
+    setOpen(false);
   }
-
-  const displayValue = value === CREATE_NEW_ID ? "" : value;
 
   return (
     <div className={`flex flex-col gap-2 flex-1 ${className}`}>
-      <div className="relative">
-        <select
-          id="deck-select"
-          value={showCreateInput ? CREATE_NEW_ID : displayValue}
-          onChange={(e) => handleSelectChange(e.target.value)}
-          className="w-full appearance-none px-4 py-3 pr-10 text-base font-medium text-text bg-surface border border-border rounded-xl focus:outline-none cursor-pointer"
-        >
-          {decks.map((deck) => (
-            <option key={deck.id} value={deck.id}>
-              {deck.name}
-            </option>
-          ))}
-          <option value={CREATE_NEW_ID}>{t("decks_create_new")}</option>
-        </select>
-        <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-secondary pointer-events-none" />
-      </div>
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="w-full flex items-center justify-between px-4 py-3 text-base font-medium text-text bg-surface border border-border hover:border-border-hover rounded-xl focus:outline-none cursor-pointer transition-colors"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <span className="truncate">{selectedDeck?.name ?? ""}</span>
+        <ChevronDownIcon
+          className={`w-5 h-5 shrink-0 text-text-secondary transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
 
-      {showCreateInput && (
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newDeckName}
-            onChange={(e) => setNewDeckName(e.target.value)}
-            placeholder={t("decks_create_placeholder")}
-            className="flex-1 px-4 py-3 text-base border border-border rounded-xl focus:outline-none bg-surface text-text placeholder:text-text-secondary"
-            onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-            autoFocus
-          />
-          <button
-            type="button"
-            onClick={handleCreate}
-            disabled={!newDeckName.trim()}
-            className="shrink-0 px-4 py-3 text-base font-bold text-white bg-[var(--color-primary)] rounded-xl hover:bg-[var(--color-primary-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      {open &&
+        dropdownRect &&
+        createPortal(
+          <div
+            id="deck-dropdown"
+            role="listbox"
+            className="fixed z-[100] bg-surface border border-border overflow-hidden flex flex-col rounded-xl shadow-[0_6px_20px_rgb(0_0_0_/_0.08),0_8px_8px_rgb(0_0_0_/_0.05)]"
+            style={{
+              top: dropdownRect.openUp ? "auto" : dropdownRect.rect.bottom + 8,
+              bottom: dropdownRect.openUp
+                ? window.innerHeight - dropdownRect.rect.top + 8
+                : "auto",
+              left: dropdownRect.left,
+              width: dropdownRect.width,
+              maxHeight: "min(300px, calc(100vh - 80px))",
+            }}
           >
-            {t("decks_create")}
-          </button>
-        </div>
-      )}
+            <ul className="overflow-auto py-1">
+              {decks.map((deck) => (
+                <li
+                  key={deck.id}
+                  role="option"
+                  aria-selected={deck.id === value}
+                  className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer text-sm transition-colors ${
+                    deck.id === value
+                      ? "bg-primary-muted text-text font-semibold"
+                      : "text-text hover:bg-[var(--color-border)]/30"
+                  }`}
+                  onClick={() => handleSelect(deck.id)}
+                >
+                  <span className="w-4 shrink-0">
+                    {deck.id === value && (
+                      <CheckIcon className="w-4 h-4 text-[var(--color-primary)]" />
+                    )}
+                  </span>
+                  <span className="truncate">{deck.name}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="border-t border-border px-3 py-2">
+              {isCreating ? (
+                <div className="flex gap-2">
+                  <input
+                    ref={createInputRef}
+                    type="text"
+                    value={newDeckName}
+                    onChange={(e) => setNewDeckName(e.target.value)}
+                    placeholder={t("decks_create_placeholder")}
+                    className="flex-1 min-w-0 px-3 py-2 text-sm border border-border rounded-lg focus:outline-none bg-surface text-text placeholder:text-text-secondary"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleCreate();
+                      if (e.key === "Escape") setIsCreating(false);
+                    }}
+                  />
+                  <Button onClick={handleCreate} disabled={!newDeckName.trim()} size="sm" className="shrink-0 font-bold">
+                    {t("decks_create")}
+                  </Button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleStartCreate}
+                  className="w-full text-left px-4 py-2.5 text-sm text-text-secondary hover:bg-[var(--color-border)]/30 rounded-lg transition-colors"
+                >
+                  {t("decks_create_new")}
+                </button>
+              )}
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

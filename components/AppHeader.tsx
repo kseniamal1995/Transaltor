@@ -83,7 +83,7 @@ export function AppHeader() {
 
   return (
     <>
-      <header className="flex items-center justify-between gap-3 px-6 pt-4 pb-4 md:px-8 md:pt-4 md:pb-8">
+      <header className="flex items-center justify-between gap-3 pl-8 pr-6 pt-4 pb-4 md:px-8 md:pt-4 md:pb-[52px]">
         {/* Слева: серый кружок (лого) 32px на мобилке, лого на десктопе */}
         <div className="flex items-center shrink-0">
           <div className="md:hidden w-8 h-8 rounded-full bg-[var(--color-border)] shrink-0" aria-hidden />
@@ -91,13 +91,13 @@ export function AppHeader() {
         </div>
 
         {/* Навигация — только на десктопе */}
-        <nav className="hidden md:flex flex-1 justify-center max-w-[600px]">
-          <div className="flex gap-3 p-1 border border-border rounded-full">
+        <nav className="hidden md:flex flex-1 justify-center max-w-[650px]">
+          <div className="flex gap-3 p-1 border border-border rounded-full w-full max-w-[450px]">
             {NAV_TABS.map((tab) => (
               <Link
                 key={tab.href}
                 href={tab.href}
-                className={`px-4 py-2 rounded-full no-underline transition-colors ${
+                className={`px-4 py-2 rounded-full no-underline transition-colors w-full h-fit text-center ${
                   isNavActive(pathname, tab.href) ? "bg-primary-muted text-text font-semibold" : "text-text-secondary hover:text-text"
                 }`}
               >

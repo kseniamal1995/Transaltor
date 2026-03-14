@@ -27,20 +27,20 @@ export function StudyCard({
       aria-label={isFlipped ? t("study_show_word") : t("study_show_translation")}
     >
       <div
-        className="relative w-full min-h-[220px]"
+        className="relative w-full h-full min-h-[220px]"
         style={{
           transform: `translateX(${swipeOffset}px)`,
           transition: swipeOffset === 0 ? "transform 0.3s ease-out" : "none",
         }}
       >
         <div
-          className={`w-full min-h-[220px] flex flex-col items-center justify-center p-6 rounded-xl border-2 shadow-lg ${
+          className={`w-full h-full min-h-[220px] flex flex-col items-center justify-center p-6 rounded-xl border-2 shadow-lg ${
             isFlipped ? "bg-[var(--color-primary-muted)] border-primary" : "bg-surface border-border"
           }`}
         >
           {!isFlipped ? (
             <>
-              <p className="text-2xl font-semibold text-gray-900 text-center">
+              <p className="text-2xl font-semibold text-text text-center">
                 {foreign}
               </p>
               <p className="mt-3 text-sm text-text-muted">
@@ -49,7 +49,7 @@ export function StudyCard({
             </>
           ) : (
             <>
-              <p className="text-xl font-medium text-gray-900 text-center">
+              <p className="text-xl font-medium text-text text-center">
                 {translation}
               </p>
               <p className="mt-3 text-sm text-text-muted">

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { t } from "@/lib/strings";
+import { getButtonClassName } from "./Button";
 import { DAILY_GUEST_LIMIT, WARN_THRESHOLD } from "@/lib/usageLimit";
 
 interface TranslationLimitBannerProps {
@@ -77,13 +78,13 @@ export function TranslationLimitBanner({ remaining, onDismiss }: TranslationLimi
       <div className="flex gap-2">
         <Link
           href="/sign-in"
-          className="flex-1 px-4 py-2.5 text-base font-bold text-white bg-[var(--color-primary)] rounded-xl hover:bg-[var(--color-primary-hover)] transition-colors text-center"
+          className={getButtonClassName("primary", "md", "flex-1 text-center font-bold")}
         >
           {t("limit_sign_in")}
         </Link>
         <Link
           href="/sign-up"
-          className="flex-1 px-4 py-2.5 text-base font-medium text-text-secondary bg-surface border border-border rounded-xl hover:bg-surface-secondary transition-colors text-center"
+          className={getButtonClassName("secondary", "md", "flex-1 text-center text-text-secondary")}
         >
           {t("limit_sign_up")}
         </Link>

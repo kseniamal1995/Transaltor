@@ -3,6 +3,9 @@
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { t } from "@/lib/strings";
 import { SpeakButton } from "./SpeakButton";
+import { IconButton } from "./IconButton";
+import { CheckIcon } from "./icons/CheckIcon";
+import { CopyIcon } from "./icons/CopyIcon";
 
 interface TranslationCardProps {
   defaultTranslation: string;
@@ -10,23 +13,6 @@ interface TranslationCardProps {
   onCustomTranslationChange: (value: string) => void;
   lang?: string;
   placeholder?: string;
-}
-
-function CopyIcon({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
-      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
-    </svg>
-  );
-}
-
-function CheckIcon({ className }: { className?: string }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M20 6 9 17l-5-5" />
-    </svg>
-  );
 }
 
 export function TranslationCard({
@@ -88,18 +74,16 @@ export function TranslationCard({
 
       <div className="flex items-center gap-2 pr-1">
         <div className="flex flex-1 items-center gap-1">
-          <button
-            type="button"
+          <IconButton
             onClick={handleCopy}
-            className="p-[6px] rounded-xl text-text-secondary hover:bg-tertiary transition-colors"
-            aria-label="Копировать перевод"
+            ariaLabel="Копировать перевод"
             title={copied ? "Скопировано!" : "Копировать"}
           >
             {copied
               ? <CheckIcon className="w-5 h-5 text-[var(--color-primary)]" />
               : <CopyIcon className="w-5 h-5" />
             }
-          </button>
+          </IconButton>
           <SpeakButton text={displayText} lang={lang} iconOnly />
         </div>
 

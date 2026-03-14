@@ -1,6 +1,7 @@
 "use client";
 
 import { t } from "@/lib/strings";
+import { FORM_INPUT_CLASSES, FORM_LABEL_CLASSES } from "@/lib/ui-classes";
 
 interface CustomTranslationInputProps {
   value: string;
@@ -17,7 +18,7 @@ export function CustomTranslationInput({
 }: CustomTranslationInputProps) {
   return (
     <div className="flex flex-col gap-1">
-      <label htmlFor="custom-translation" className="text-sm font-medium text-gray-700">
+      <label htmlFor="custom-translation" className={FORM_LABEL_CLASSES}>
         {label}
       </label>
       <input
@@ -26,7 +27,7 @@ export function CustomTranslationInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent md:text-base"
+        className={FORM_INPUT_CLASSES}
       />
     </div>
   );

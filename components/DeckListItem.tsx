@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { CARD_INTERACTIVE_CLASSES } from "@/lib/ui-classes";
 import { DeckProgressBar } from "./DeckProgressBar";
 
 interface DeckListItemProps {
@@ -16,9 +17,9 @@ export function DeckListItem({ id, name, learned, total, lang }: DeckListItemPro
   return (
     <Link
       href={href}
-      className="block p-4 bg-white rounded-lg border border-gray-200 shadow-sm hover:border-blue-300 hover:shadow-md transition-all"
+      className={CARD_INTERACTIVE_CLASSES}
     >
-      <h3 className="font-semibold text-gray-900 mb-2">{name}</h3>
+      <h3 className="font-semibold text-text mb-2">{name}</h3>
       <DeckProgressBar learned={learned} total={total} />
     </Link>
   );

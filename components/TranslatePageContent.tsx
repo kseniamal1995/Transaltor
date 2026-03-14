@@ -27,6 +27,7 @@ import { LanguagePairBlock } from "./LanguagePairBlock";
 import { PageHeader } from "./PageHeader";
 import { TranslationLimitBanner } from "./TranslationLimitBanner";
 import { t } from "@/lib/strings";
+import { PAGE_LAYOUT_CLASSES } from "@/lib/ui-classes";
 
 const MIN_CHARS_TO_TRANSLATE = 2;
 
@@ -246,7 +247,7 @@ export function TranslatePageContent() {
   }
 
   return (
-    <div className="px-6 py-6 max-w-[600px] mx-auto flex flex-col gap-4 md:px-8 md:gap-10">
+    <div className={`${PAGE_LAYOUT_CLASSES} gap-4 md:gap-10`}>
       <PageHeader
         title={t("translate_hero")}
         subtitle={t("translate_subtitle")}
@@ -296,7 +297,7 @@ export function TranslatePageContent() {
         {translatedText && sourceText && decks.length > 0 && (
           <>
             {savedMessage && (
-              <p className="text-sm text-green-600 font-medium">{savedMessage}</p>
+              <p className="text-sm text-[var(--color-success)] font-medium">{savedMessage}</p>
             )}
             <SaveCardForm
               key={`${sourceText}-${translatedText}`}

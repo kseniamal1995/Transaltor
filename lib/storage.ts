@@ -278,6 +278,13 @@ export function deleteLanguage(userId: string, lang: string): void {
 }
 
 /** Deletes a deck and removes it from all cards. Cannot delete ALL_CARDS_DECK_ID. */
+export function renameDeck(userId: string, deckId: string, name: string): void {
+  if (deckId === ALL_CARDS_DECK_ID) return;
+  const decks = getDecks(userId);
+  const updated = decks.map((d) => (d.id === deckId ? { ...d, name } : d));
+  saveDecks(userId, updated);
+}
+
 export function deleteDeck(userId: string, deckId: string): void {
   if (deckId === ALL_CARDS_DECK_ID) return;
 

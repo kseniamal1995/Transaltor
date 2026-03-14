@@ -5,6 +5,7 @@ import type { Deck } from "@/types";
 import { createDeck, getCurrentUser, saveCard } from "@/lib/storage";
 import { SaveCardForm } from "./SaveCardForm";
 import { TranslationCard } from "./TranslationCard";
+import { IconButton } from "./IconButton";
 import { TrashIcon } from "./icons/TrashIcon";
 import { t } from "@/lib/strings";
 
@@ -63,14 +64,13 @@ export function HistoryItem({
 
   return (
     <article className="p-4 bg-surface rounded-xl border border-border relative">
-      <button
-        type="button"
+      <IconButton
         onClick={onDelete}
-        className="absolute top-4 right-4 p-1.5 text-text-secondary hover:text-[var(--color-error)] hover:bg-red-50 rounded-xl transition-colors"
-        aria-label={t("history_delete_aria")}
+        ariaLabel={t("history_delete_aria")}
+        className="absolute top-4 right-4 hover:text-[var(--color-error)] hover:bg-[var(--color-primary-muted)]"
       >
         <TrashIcon size={18} />
-      </button>
+      </IconButton>
       <div className="flex flex-col gap-2 pr-8">
         {!showForm ? (
           <>

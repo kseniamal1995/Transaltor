@@ -17,21 +17,21 @@ export function DeckProgressBar({
 
   return (
     <div
-      className={`flex items-center gap-2 ${className}`}
+      className={`flex items-center gap-3 ${className}`}
       role="progressbar"
       aria-valuenow={learned}
       aria-valuemin={0}
       aria-valuemax={total}
       aria-label={`${learned}/${total} ${t("deck_progress_aria")}`}
     >
-      <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+      <div className="flex-1 h-2 bg-tertiary rounded-full overflow-hidden">
         <div
-          className="h-full bg-blue-500 rounded-full transition-all duration-300"
+          className="h-full bg-[var(--color-primary)] rounded-full transition-all duration-300"
           style={{ width: `${percent}%` }}
         />
       </div>
-      <span className="text-xs font-medium text-gray-600 min-w-[3rem]">
-        {learned}/{total}
+      <span className="text-sm text-text-secondary min-w-[2.5rem] text-center shrink-0">
+        {percent}%
       </span>
     </div>
   );

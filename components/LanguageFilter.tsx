@@ -1,6 +1,7 @@
 "use client";
 
 import { getLanguageName } from "@/lib/languages";
+import { FORM_INPUT_CLASSES, FORM_LABEL_CLASSES } from "@/lib/ui-classes";
 
 interface LanguageFilterProps {
   languages: string[];
@@ -15,13 +16,13 @@ export function LanguageFilter({
 }: LanguageFilterProps) {
   return (
     <div className="flex flex-col gap-1">
-      <label className="text-sm font-medium text-gray-700">
+      <label className={FORM_LABEL_CLASSES}>
         Фильтр по языку
       </label>
       <select
         value={selectedLang}
         onChange={(e) => onLangChange(e.target.value)}
-        className="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white md:text-base"
+        className={FORM_INPUT_CLASSES}
       >
         <option value="all">Все языки</option>
         {languages.map((code) => (
