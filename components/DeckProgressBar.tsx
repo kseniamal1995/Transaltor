@@ -1,7 +1,5 @@
 "use client";
 
-import { t } from "@/lib/strings";
-
 interface DeckProgressBarProps {
   learned: number;
   total: number;
@@ -14,25 +12,54 @@ export function DeckProgressBar({
   className = "",
 }: DeckProgressBarProps) {
   const percent = total > 0 ? Math.round((learned / total) * 100) : 0;
+  const radius = 22;
+  const strokeWidth = 4;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (circumference * percent) / 100;
 
   return (
-    <div
-      className={`flex items-center gap-3 ${className}`}
-      role="progressbar"
-      aria-valuenow={learned}
-      aria-valuemin={0}
-      aria-valuemax={total}
-      aria-label={`${learned}/${total} ${t("deck_progress_aria")}`}
-    >
-      <div className="flex-1 h-2 bg-tertiary rounded-full overflow-hidden">
-        <div
-          className="h-full bg-[var(--color-primary)] rounded-full transition-all duration-300"
-          style={{ width: `${percent}%` }}
-        />
+    <div className={`flex items-center gap-3 ${className}`}>
+      <div
+        className="relative inline-flex items-center justify-center"
+        style={{ width: 56, height: 56 }}
+        role="progressbar"
+        aria-valuenow={learned}
+        aria-valuemin={0}
+        aria-valuemax={total}
+        aria-label={`${percent}%`}
+      >
+        <svg
+          width={56}
+          height={56}
+          viewBox="0 0 56 56"
+          className="text-[var(--color-tertiary)]"
+        >
+          <circle
+            className="stroke-current"
+            strokeWidth={strokeWidth}
+            fill="transparent"
+            cx="28"
+            cy="28"
+            r={radius}
+          />
+          <circle
+            className="text-[var(--color-primary)]"
+            stroke="currentColor"
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+            fill="transparent"
+            cx="28"
+            cy="28"
+            r={radius}
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            style={{ transform: "rotate(-90deg)", transformOrigin: "50% 50%", transition: "stroke-dashoffset 0.3s ease-out" }}
+          />
+        </svg>
+        <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-xs font-medium text-text leading-none">
+          {percent}%
+        </span>
       </div>
-      <span className="text-sm text-text-secondary min-w-[2.5rem] text-center shrink-0">
-        {percent}%
-      </span>
     </div>
   );
 }

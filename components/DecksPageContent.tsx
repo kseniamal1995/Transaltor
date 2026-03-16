@@ -16,9 +16,8 @@ import { getLanguageName, getFlagUrl } from "@/lib/languages";
 import { ALL_CARDS_DECK_ID } from "@/lib/constants";
 import { EmptyStateIllustration } from "./EmptyStateIllustration";
 import { DeckProgressBar } from "./DeckProgressBar";
-import { DotsVerticalIcon } from "./icons/DotsVerticalIcon";
 import { ChevronDownIcon } from "./icons/ChevronDownIcon";
-import { IconButton } from "./IconButton";
+import { PlayIcon } from "./icons/PlayIcon";
 import { PAGE_LAYOUT_CLASSES } from "@/lib/ui-classes";
 import { getButtonClassName } from "./Button";
 import { t } from "@/lib/strings";
@@ -147,10 +146,9 @@ interface LanguageCardProps {
   totalWords: number;
   totalLearned: number;
   studyHref: string;
-  onDeleteLanguage: (lang: string) => void;
 }
 
-function LanguageCard({ languages, selected, onSelect, totalWords, totalLearned, studyHref, onDeleteLanguage }: LanguageCardProps) {
+function LanguageCard({ languages, selected, onSelect, totalWords, totalLearned, studyHref }: LanguageCardProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -166,14 +164,21 @@ function LanguageCard({ languages, selected, onSelect, totalWords, totalLearned,
   const hasMultiple = languages.length > 1;
 
   return (
-    <div ref={ref} className="bg-surface rounded-2xl border border-border hover:border-[var(--color-primary)] transition-all">
-      <div className="relative px-6 pt-6 pb-4">
-        <div className="flex items-center gap-4">
-          <Link href={studyHref} className="flex-1 min-w-0 flex items-center gap-3">
-            <FlagIcon code={selected} size={24} />
-            <span className="font-semibold text-base text-text truncate">
-              {getLanguageName(selected)}
-            </span>
+    <div ref={ref} className="bg-surface rounded-2xl border border-border transition-all">
+      <div className="px-6 py-5 flex flex-col gap-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0 flex items-center gap-3">
+            <Link href={studyHref} className="flex items-center gap-3 min-w-0 flex-1">
+              <FlagIcon code={selected} size={42} />
+              <div className="flex flex-col min-w-0">
+                <span className="font-semibold text-base text-text truncate">
+                  {getLanguageName(selected)}
+                </span>
+                <span className="text-sm text-text-secondary">
+                  {formatWordCount(totalWords)}
+                </span>
+              </div>
+            </Link>
             {hasMultiple && (
               <button
                 type="button"
@@ -182,31 +187,26 @@ function LanguageCard({ languages, selected, onSelect, totalWords, totalLearned,
                   e.stopPropagation();
                   setDropdownOpen((v) => !v);
                 }}
-                className="shrink-0 p-0.5 rounded hover:bg-[var(--color-primary-muted)]"
+                className="shrink-0 p-1 rounded-full hover:bg-[var(--color-primary-muted)]"
                 aria-expanded={dropdownOpen}
                 aria-haspopup="listbox"
               >
                 <ChevronDownIcon
-                  className={`w-5 h-5 text-text-secondary transition-transform ${dropdownOpen ? "rotate-180" : ""}`}
+                  className={`w-5 h-5 text-text-secondary transition-transform ${
+                    dropdownOpen ? "rotate-180" : ""
+                  }`}
                 />
               </button>
             )}
-          </Link>
-          <span className="text-sm text-text-secondary shrink-0">
-            {t("decks_total_label")} {formatWordCount(totalWords)}
-          </span>
-          <div className="shrink-0" onClick={(e) => e.preventDefault()}>
-            <LanguageCardMenu
-              lang={selected}
-              onDelete={() => onDeleteLanguage(selected)}
-            />
           </div>
+          <DeckProgressBar learned={totalLearned} total={totalWords} />
         </div>
+
         {dropdownOpen && hasMultiple && (
           <ul
             role="listbox"
             onClick={(e) => e.stopPropagation()}
-            className="absolute left-6 right-6 top-full mt-2 z-50 bg-surface border border-border rounded-xl shadow-md py-1 min-w-[200px]"
+            className="mt-1 z-50 bg-surface border border-border rounded-xl shadow-md py-1 min-w-[200px]"
           >
             {languages.map((lang) => (
               <li key={lang}>
@@ -231,10 +231,31 @@ function LanguageCard({ languages, selected, onSelect, totalWords, totalLearned,
             ))}
           </ul>
         )}
+
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Link
+            href={studyHref}
+            className={getButtonClassName(
+              "primary",
+              "sm",
+              "inline-flex items-center justify-center gap-2 text-center"
+            )}
+          >
+            <PlayIcon className="w-5 h-5" />
+            <span>{t("decks_start_training")}</span>
+          </Link>
+          <Link
+            href={`/decks/${encodeURIComponent(selected)}`}
+            className={getButtonClassName(
+              "secondary",
+              "sm",
+              "inline-flex items-center justify-center text-sm"
+            )}
+          >
+            {t("decks_open_dictionary")}
+          </Link>
+        </div>
       </div>
-      <Link href={studyHref} className="block px-6 pb-6">
-        <DeckProgressBar learned={totalLearned} total={totalWords} />
-      </Link>
     </div>
   );
 }
@@ -408,34 +429,47 @@ export function DecksPageContent() {
               {customDecks.map((deck) => (
                 <div
                   key={deck.id}
-                  className="bg-surface rounded-2xl border border-border hover:border-[var(--color-primary)] transition-all"
+                  className="bg-surface rounded-2xl border border-border transition-all"
                 >
-                  <div className="px-6 pt-6 pb-4">
-                    <div className="flex items-center gap-4">
+                  <div className="px-6 py-5 flex flex-col gap-4">
+                    <div className="flex items-start justify-between gap-4">
                       <Link
                         href={`/deck/${deck.id}/study?lang=${encodeURIComponent(selectedLang)}`}
                         className="flex-1 min-w-0"
                       >
-                        <p className="font-semibold text-base text-text truncate">{deck.name}</p>
+                        <p className="font-semibold text-base text-text truncate">
+                          {deck.name}
+                        </p>
+                        <p className="text-sm text-text-secondary">
+                          {formatWordCount(deck.total)}
+                        </p>
                       </Link>
-                      <span className="text-sm text-text-secondary shrink-0">
-                        {formatWordCount(deck.total)}
-                      </span>
-                      <div className="shrink-0" onClick={(e) => e.preventDefault()}>
-                        <DeckMenu
-                          deckId={deck.id}
-                          lang={selectedLang}
-                          onDelete={() => handleDelete(deck.id, deck.name)}
-                        />
-                      </div>
+                      <DeckProgressBar learned={deck.learned} total={deck.total} />
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <Link
+                        href={`/deck/${deck.id}/study?lang=${encodeURIComponent(selectedLang)}`}
+                        className={getButtonClassName(
+                          "primary",
+                          "sm",
+                          "inline-flex items-center justify-center gap-2 text-center"
+                        )}
+                      >
+                        <PlayIcon className="w-5 h-5" />
+                        <span>{t("decks_start_training")}</span>
+                      </Link>
+                      <Link
+                        href={`/deck/${deck.id}${selectedLang ? `?lang=${encodeURIComponent(selectedLang)}` : ""}`}
+                        className={getButtonClassName(
+                          "secondary",
+                          "sm",
+                          "inline-flex items-center justify-center text-sm"
+                        )}
+                      >
+                        {t("decks_open_dictionary")}
+                      </Link>
                     </div>
                   </div>
-                  <Link
-                    href={`/deck/${deck.id}/study?lang=${encodeURIComponent(selectedLang)}`}
-                    className="block px-6 pb-6"
-                  >
-                    <DeckProgressBar learned={deck.learned} total={deck.total} />
-                  </Link>
                 </div>
               ))}
             </div>

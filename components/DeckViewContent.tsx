@@ -13,8 +13,6 @@ import { t } from "@/lib/strings";
 import { getLanguageName } from "@/lib/languages";
 import { getButtonClassName } from "./Button";
 import { DeckProgressBar } from "./DeckProgressBar";
-import { IconButton } from "./IconButton";
-import { DotsVerticalIcon } from "./icons/DotsVerticalIcon";
 
 interface DeckViewContentProps {
   deckId: string;
@@ -98,10 +96,10 @@ export function DeckViewContent({ deckId, lang }: DeckViewContentProps) {
                 ? `/deck/${deckId}/study?lang=${encodeURIComponent(lang)}`
                 : `/deck/${deckId}/study`;
               return (
-                <li key={card.id} className="relative group">
+                <li key={card.id} className="group">
                   <Link
                     href={studyHref}
-                    className="block w-full p-4 pr-12 min-h-[4rem] bg-surface rounded-xl border border-border group-hover:border-[var(--color-primary)] transition-colors"
+                    className="block w-full p-4 min-h-[4rem] bg-surface rounded-xl border border-border group-hover:border-[var(--color-primary)] transition-colors"
                   >
                     <p className="font-medium text-text">{card.foreign}</p>
                     <p className="text-text-secondary mt-1">{displayTranslation(card)}</p>
@@ -111,17 +109,6 @@ export function DeckViewContent({ deckId, lang }: DeckViewContentProps) {
                       </span>
                     )}
                   </Link>
-                  <div className="absolute top-4 right-4 z-10">
-                    <IconButton
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                      ariaLabel={t("deck_more_aria")}
-                    >
-                      <DotsVerticalIcon size={20} />
-                    </IconButton>
-                  </div>
                 </li>
               );
             })}

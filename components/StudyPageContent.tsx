@@ -33,6 +33,15 @@ interface StudyPageContentProps {
 
 const SWIPE_THRESHOLD = 80;
 
+function formatWordCount(n: number): string {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod100 >= 11 && mod100 <= 14) return t("decks_word_count_many").replace("{n}", String(n));
+  if (mod10 === 1) return t("decks_word_count_one").replace("{n}", String(n));
+  if (mod10 >= 2 && mod10 <= 4) return t("decks_word_count_few").replace("{n}", String(n));
+  return t("decks_word_count_many").replace("{n}", String(n));
+}
+
 export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
   const [deck, setDeck] = useState<{ id: string; name: string } | null>(null);
   const [cards, setCards] = useState<CardData[]>([]);
@@ -198,21 +207,24 @@ export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
-      <header className="flex flex-col gap-3 shrink-0">
+      <header className="flex flex-col gap-4 shrink-0">
         <Link href="/decks" className={BACK_LINK_CLASSES}>
           {t("deck_back_to_list")}
         </Link>
-        <h1 className="font-display text-2xl font-normal text-text leading-normal md:text-3xl">
-          {deck.name}
-        </h1>
-        <DeckProgressBar
-          learned={progress.learned}
-          total={progress.total}
-          className="w-full"
-        />
-        <p className="text-xs text-text-muted">
-          Карточка {currentIndex + 1} из {cards.length}
-        </p>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <h1 className="font-display text-2xl font-normal text-text leading-normal md:text-3xl">
+              {deck.name}
+            </h1>
+            <p className="text-sm text-text-secondary">
+              {formatWordCount(progress.total)}
+            </p>
+          </div>
+          <DeckProgressBar
+            learned={progress.learned}
+            total={progress.total}
+          />
+        </div>
       </header>
 
       <main className="h-fit flex flex-col items-center justify-center w-full min-h-0">
@@ -227,10 +239,10 @@ export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
 
         {isFlipped && (
           <div className="mt-6 flex flex-wrap gap-3 justify-center">
-            <Button variant="secondary" onClick={() => handleSwipe(false)}>
+            <Button variant="secondary" size="lg" onClick={() => handleSwipe(false)}>
               ✗ Ещё раз
             </Button>
-            <Button onClick={() => handleSwipe(true)}>
+            <Button size="lg" onClick={() => handleSwipe(true)}>
               ✓ Выучено
             </Button>
           </div>
@@ -242,6 +254,10 @@ export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
             lang={currentCard.foreignLanguage ?? "en"}
           />
         </div>
+
+        <p className="mt-4 text-xs text-text-muted">
+          Карточка {currentIndex + 1} из {cards.length}
+        </p>
       </main>
 
       {isLastCard && isFlipped && (
