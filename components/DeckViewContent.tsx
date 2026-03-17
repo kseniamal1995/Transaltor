@@ -171,7 +171,7 @@ export function DeckViewContent({ deckId, lang }: DeckViewContentProps) {
 
       {cards.length > 0 ? (
         <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-3 px-4 py-4 bg-surface-secondary border border-border rounded-xl">
+          <div className="flex items-center gap-3 px-4 py-3 bg-surface-secondary border border-border rounded-xl">
             <SearchIcon className="w-5 h-5 shrink-0 text-text-secondary" />
             <input
               type="text"

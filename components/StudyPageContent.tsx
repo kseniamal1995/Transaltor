@@ -2,8 +2,10 @@
 
 import { useState, useCallback, useRef, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { getButtonClassName, Button } from "./Button";
-import { PAGE_LAYOUT_CLASSES, BACK_LINK_CLASSES } from "@/lib/ui-classes";
+import { PlayIcon } from "./icons/PlayIcon";
+import { PAGE_LAYOUT_CLASSES } from "@/lib/ui-classes";
 import {
   getCurrentUser,
   getDecksForUser,
@@ -16,6 +18,7 @@ import { t } from "@/lib/strings";
 import { DeckProgressBar } from "./DeckProgressBar";
 import { StudyCard } from "./StudyCard";
 import { SpeakButton } from "./SpeakButton";
+import { ChevronLeftIcon } from "./icons/ChevronLeftIcon";
 
 interface CardData {
   id: string;
@@ -138,7 +141,7 @@ export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
-    if (!isFlipped || !currentCard) return;
+    if (!currentCard) return;
     if (e.key === "ArrowRight") {
       handleSwipe(true);
     } else if (e.key === "ArrowLeft") {
@@ -148,45 +151,81 @@ export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
 
   if (!deck) {
     return (
-      <div className={`${PAGE_LAYOUT_CLASSES} gap-4`}>
-        <p className="text-text-secondary">{t("deck_not_found")}</p>
-        <Link href="/decks" className={BACK_LINK_CLASSES}>
-          {t("deck_back_to_list")}
+      <div className={`${PAGE_LAYOUT_CLASSES} gap-8 pb-20`}>
+        <Link
+          href="/decks"
+          className={getButtonClassName(
+            "link",
+            "sm",
+            "inline-flex items-center gap-1 w-fit no-underline hover:no-underline !px-0"
+          )}
+        >
+          <ChevronLeftIcon className="w-4 h-4" />
+          <span>{t("deck_back_short")}</span>
         </Link>
+        <p className="text-text-secondary">{t("deck_not_found")}</p>
       </div>
     );
   }
 
   if (sessionComplete) {
+    const studyHref = lang
+      ? `/deck/${deckId}/study?lang=${encodeURIComponent(lang)}`
+      : `/deck/${deckId}/study`;
+
     return (
-      <div className={`${PAGE_LAYOUT_CLASSES} items-center justify-center min-h-[60vh] gap-6`}>
-        <Link href="/decks" className={BACK_LINK_CLASSES}>
-          {t("deck_back_to_list")}
-        </Link>
-        <h2 className="text-2xl font-semibold text-text md:text-3xl">Раунд завершён!</h2>
-        <p className="text-text-secondary text-center">
-          Вы просмотрели все карточки. Прогресс сохранён.
-        </p>
-        <DeckProgressBar
-          learned={progress.learned}
-          total={progress.total}
-          className="w-48"
+      <div className={`${PAGE_LAYOUT_CLASSES} items-center justify-start min-h-[60vh] gap-6`}>
+        <Image
+          src="/party-popper.png"
+          alt=""
+          width={120}
+          height={120}
+          unoptimized
         />
-        <Link
-          href={lang ? `/deck/${deckId}/study?lang=${encodeURIComponent(lang)}` : `/deck/${deckId}/study`}
-          className={getButtonClassName("primary", "lg")}
-        >
-          Повторить
-        </Link>
+        <h2 className="text-2xl font-semibold text-text md:text-3xl">{t("study_round_complete")}</h2>
+        <p className="text-text-secondary text-center">
+          {t("study_round_complete_desc")}
+        </p>
+        <div className="flex flex-col gap-3 w-full max-w-xs">
+          <Link
+            href={studyHref}
+            className={getButtonClassName(
+              "primary",
+              "md",
+              "inline-flex items-center justify-center gap-2 text-center w-full"
+            )}
+          >
+            <PlayIcon className="w-6 h-6" />
+            <span>{t("study_repeat")}</span>
+          </Link>
+          <Link
+            href="/decks"
+            className={getButtonClassName(
+              "secondary",
+              "md",
+              "inline-flex items-center justify-center text-center w-full"
+            )}
+          >
+            {t("study_back_to_decks")}
+          </Link>
+        </div>
       </div>
     );
   }
 
   if (cards.length === 0) {
     return (
-      <div className={`${PAGE_LAYOUT_CLASSES} gap-4`}>
-        <Link href="/decks" className={BACK_LINK_CLASSES}>
-          {t("deck_back_to_list")}
+      <div className={`${PAGE_LAYOUT_CLASSES} gap-8 pb-20`}>
+        <Link
+          href="/decks"
+          className={getButtonClassName(
+            "link",
+            "sm",
+            "inline-flex items-center gap-1 w-fit no-underline hover:no-underline !px-0"
+          )}
+        >
+          <ChevronLeftIcon className="w-4 h-4" />
+          <span>{t("deck_back_short")}</span>
         </Link>
         <h1 className="font-display text-2xl font-semibold text-text md:text-3xl">Режим изучения</h1>
         <p className="text-text-secondary">
@@ -196,7 +235,6 @@ export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
     );
   }
 
-  const isLastCard = currentIndex >= cards.length - 1 && cards.length > 0;
 
   return (
     <div
@@ -208,22 +246,25 @@ export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
       tabIndex={0}
     >
       <header className="flex flex-col gap-4 shrink-0">
-        <Link href="/decks" className={BACK_LINK_CLASSES}>
-          {t("deck_back_to_list")}
+        <Link
+          href="/decks"
+          className={getButtonClassName(
+            "link",
+            "sm",
+            "inline-flex items-center gap-1 w-fit no-underline hover:no-underline !px-0"
+          )}
+        >
+          <ChevronLeftIcon className="w-4 h-4" />
+          <span>{t("deck_back_short")}</span>
         </Link>
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <h1 className="font-display text-2xl font-normal text-text leading-normal md:text-3xl">
-              {deck.name}
-            </h1>
-            <p className="text-sm text-text-secondary">
-              {formatWordCount(progress.total)}
-            </p>
-          </div>
-          <DeckProgressBar
-            learned={progress.learned}
-            total={progress.total}
-          />
+        <div className="flex items-center gap-3">
+          <DeckProgressBar learned={progress.learned} total={progress.total} />
+          <h1 className="font-display text-h2 font-normal text-text leading-normal flex-1 min-w-0">
+            {deck.name}
+          </h1>
+          <span className="text-sm text-text-secondary shrink-0">
+            {currentIndex + 1} из {cards.length}
+          </span>
         </div>
       </header>
 
@@ -237,16 +278,14 @@ export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
           className="w-full"
         />
 
-        {isFlipped && (
-          <div className="mt-6 flex flex-wrap gap-3 justify-center">
-            <Button variant="secondary" size="lg" onClick={() => handleSwipe(false)}>
-              ✗ Ещё раз
-            </Button>
-            <Button size="lg" onClick={() => handleSwipe(true)}>
-              ✓ Выучено
-            </Button>
-          </div>
-        )}
+        <div className="mt-6 flex flex-wrap gap-3 justify-center">
+          <Button variant="secondary" size="lg" onClick={() => handleSwipe(false)}>
+            ✗ Ещё раз
+          </Button>
+          <Button size="lg" onClick={() => handleSwipe(true)}>
+            ✓ Выучено
+          </Button>
+        </div>
 
         <div className="mt-4">
           <SpeakButton
@@ -255,16 +294,7 @@ export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
           />
         </div>
 
-        <p className="mt-4 text-xs text-text-muted">
-          Карточка {currentIndex + 1} из {cards.length}
-        </p>
       </main>
-
-      {isLastCard && isFlipped && (
-        <p className="py-2 text-center text-text-muted text-sm">
-          Последняя карточка. Нажмите «Выучено» или «Ещё раз».
-        </p>
-      )}
     </div>
   );
 }
