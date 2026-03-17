@@ -99,13 +99,6 @@ function LanguageCardMenu({ lang, onDelete }: LanguageCardMenuProps) {
     action();
   }
 
-  function goToRename(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    setOpen(false);
-    router.push(`/decks/${encodeURIComponent(lang)}`);
-  }
-
   return (
     <div ref={ref} className="relative shrink-0">
       <IconButton
@@ -118,13 +111,6 @@ function LanguageCardMenu({ lang, onDelete }: LanguageCardMenuProps) {
 
       {open && (
         <div className="absolute right-0 top-full mt-1 z-50 bg-surface border border-border rounded-xl shadow-md py-1 min-w-[160px]">
-          <button
-            type="button"
-            onClick={goToRename}
-            className="block w-full text-left px-4 py-2.5 text-sm text-text hover:bg-tertiary transition-colors"
-          >
-            {t("deck_menu_rename")}
-          </button>
           <button
             type="button"
             onClick={(e) => pick(e, onDelete)}
@@ -293,8 +279,6 @@ function DeckMenu({ deckId, lang, onDelete }: DeckMenuProps) {
     action();
   }
 
-  const editHref = `/deck/${deckId}/edit${lang ? `?lang=${encodeURIComponent(lang)}` : ""}`;
-
   return (
     <div ref={ref} className="relative">
       <IconButton
@@ -307,13 +291,6 @@ function DeckMenu({ deckId, lang, onDelete }: DeckMenuProps) {
 
       {open && (
         <div className="absolute right-0 top-full mt-1 z-50 bg-surface border border-border rounded-xl shadow-md py-1 min-w-[160px]">
-          <Link
-            href={editHref}
-            className="block w-full text-left px-4 py-2.5 text-sm text-text hover:bg-tertiary transition-colors"
-            onClick={() => setOpen(false)}
-          >
-            {t("deck_menu_rename")}
-          </Link>
           <button
             type="button"
             onClick={(e) => pick(e, onDelete)}

@@ -36,6 +36,7 @@ const config: Config = {
         lg: "var(--text-lg)",
         xl: "var(--text-xl)",
         "2xl": "var(--text-2xl)",
+        h2: "var(--text-h2)",
         "3xl": "var(--text-3xl)",
       },
       borderRadius: {

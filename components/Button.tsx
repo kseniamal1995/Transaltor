@@ -3,6 +3,7 @@ import type { ReactNode, MouseEvent } from "react";
 const VARIANT_STYLES = {
   primary: "bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]",
   secondary: "bg-surface border border-border hover:border-border-hover text-text hover:bg-surface-secondary",
+  link: "bg-transparent text-text-secondary hover:text-text",
 } as const;
 
 const SIZE_STYLES = {
