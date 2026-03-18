@@ -3,7 +3,7 @@ import type { ReactNode, MouseEvent } from "react";
 const VARIANT_STYLES = {
   default: "p-[6px] text-text-secondary hover:bg-tertiary",
   primary: "p-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white",
-  secondary: "p-[6px] bg-surface border border-border text-text-secondary hover:border-border-hover hover:text-text",
+  secondary: "p-[6px] bg-transparent border border-border text-text-secondary hover:border-border-hover hover:bg-surface-secondary",
 } as const;
 
 type IconButtonVariant = keyof typeof VARIANT_STYLES;

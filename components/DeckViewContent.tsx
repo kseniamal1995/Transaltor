@@ -15,10 +15,13 @@ import { ALL_CARDS_DECK_ID } from "@/lib/constants";
 import { getLanguageName } from "@/lib/languages";
 import { PAGE_LAYOUT_CLASSES } from "@/lib/ui-classes";
 import { t } from "@/lib/strings";
-import { getButtonClassName } from "./Button";
+import { getButtonClassName, Button } from "./Button";
 import { IconButton } from "./IconButton";
+import { DropdownMenu } from "./DropdownMenu";
 import { DeckProgressBar } from "./DeckProgressBar";
 import { TrashIcon } from "./icons/TrashIcon";
+import { PencilIcon } from "./icons/PencilIcon";
+import { DotsVerticalIcon } from "./icons/DotsVerticalIcon";
 import { ChevronLeftIcon } from "./icons/ChevronLeftIcon";
 import { SearchIcon } from "./icons/SearchIcon";
 import { PlayIcon } from "./icons/PlayIcon";
@@ -50,6 +53,8 @@ export function DeckViewContent({ deckId, lang }: DeckViewContentProps) {
   const [cards, setCards] = useState<CardItem[]>([]);
   const [query, setQuery] = useState("");
   const [progress, setProgress] = useState({ total: 0, learned: 0 });
+  const [isEditing, setIsEditing] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const router = useRouter();
 
   const loadData = useCallback(() => {
@@ -92,13 +97,7 @@ export function DeckViewContent({ deckId, lang }: DeckViewContentProps) {
 
   const displayTranslation = (card: CardItem) => card.customTranslation || card.translation;
 
-  function handleDeleteCard(cardId: string) {
-    const user = getCurrentUser();
-    if (!user.id) return;
-    deleteCard(user.id, cardId);
-    setCards((prev) => prev.filter((c) => c.id !== cardId));
-    setProgress((prev) => ({ ...prev, total: prev.total - 1 }));
-  }
+  const isCustomDeck = deckId !== ALL_CARDS_DECK_ID;
 
   function handleDeleteDeck() {
     const user = getCurrentUser();
@@ -106,6 +105,41 @@ export function DeckViewContent({ deckId, lang }: DeckViewContentProps) {
     if (!confirm(t("deck_delete_deck_confirm").replace("{name}", deck.name))) return;
     deleteDeck(user.id, deckId);
     router.push("/decks");
+  }
+
+  function handleDeleteSelected() {
+    if (selectedIds.size === 0) return;
+    const msg = t("deck_edit_delete_confirm").replace("{n}", String(selectedIds.size));
+    if (!confirm(msg)) return;
+
+    const user = getCurrentUser();
+    if (!user.id) return;
+
+    for (const id of selectedIds) {
+      deleteCard(user.id, id);
+    }
+
+    setCards((prev) => prev.filter((c) => !selectedIds.has(c.id)));
+    setProgress((prev) => ({ ...prev, total: Math.max(0, prev.total - selectedIds.size) }));
+    setSelectedIds(new Set());
+    setIsEditing(false);
+  }
+
+  function handleCancelEdit() {
+    setIsEditing(false);
+    setSelectedIds(new Set());
+  }
+
+  function toggleCard(cardId: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(cardId)) {
+        next.delete(cardId);
+      } else {
+        next.add(cardId);
+      }
+      return next;
+    });
   }
 
   const filteredCards =
@@ -120,7 +154,23 @@ export function DeckViewContent({ deckId, lang }: DeckViewContentProps) {
     ? `/deck/${deckId}/study?lang=${encodeURIComponent(lang)}`
     : `/deck/${deckId}/study`;
 
-  const isCustomDeck = deckId !== ALL_CARDS_DECK_ID;
+  const menuItems = [
+    {
+      label: t("deck_edit_menu_label"),
+      icon: <PencilIcon className="w-4 h-4" />,
+      onClick: () => setIsEditing(true),
+    },
+    ...(isCustomDeck
+      ? [
+          {
+            label: t("deck_delete_deck_menu"),
+            icon: <TrashIcon size={16} />,
+            onClick: handleDeleteDeck,
+            variant: "destructive" as const,
+          },
+        ]
+      : []),
+  ];
 
   return (
     <div className={`${PAGE_LAYOUT_CLASSES} gap-8 pb-20`}>
@@ -145,28 +195,60 @@ export function DeckViewContent({ deckId, lang }: DeckViewContentProps) {
           <span className="text-sm text-text-secondary shrink-0">
             {formatWordCount(progress.total)}
           </span>
-          {isCustomDeck && (
-            <IconButton
-              onClick={handleDeleteDeck}
-              ariaLabel={t("deck_delete_deck_aria")}
+          {isEditing ? (
+            <Button
+              onClick={handleCancelEdit}
               variant="secondary"
+              size="sm"
+              className="shrink-0"
             >
-              <TrashIcon size={24} />
-            </IconButton>
+              {t("deck_edit_cancel")}
+            </Button>
+          ) : (
+            <DropdownMenu
+              items={menuItems}
+              trigger={
+                <IconButton
+                  onClick={() => {}}
+                  ariaLabel={t("deck_more_aria")}
+                  variant="secondary"
+                >
+                  <DotsVerticalIcon size={24} />
+                </IconButton>
+              }
+            />
           )}
         </div>
 
-        <Link
-          href={studyHref}
-          className={getButtonClassName(
-            "primary",
-            "md",
-            "inline-flex items-center justify-center gap-2 text-center w-full"
-          )}
-        >
-          <PlayIcon className="w-6 h-6" />
-          <span>{t("decks_start_training")}</span>
-        </Link>
+        {isEditing ? (
+          <button
+            type="button"
+            onClick={handleDeleteSelected}
+            disabled={selectedIds.size === 0}
+            className={getButtonClassName(
+              "primary",
+              "md",
+              "inline-flex items-center justify-center gap-2 text-center w-full !bg-[var(--color-error)] hover:!bg-red-700"
+            )}
+          >
+            <TrashIcon size={20} />
+            <span>
+              {t("deck_edit_delete_selected").replace("{n}", String(selectedIds.size))}
+            </span>
+          </button>
+        ) : (
+          <Link
+            href={studyHref}
+            className={getButtonClassName(
+              "primary",
+              "md",
+              "inline-flex items-center justify-center gap-2 text-center w-full"
+            )}
+          >
+            <PlayIcon className="w-6 h-6" />
+            <span>{t("decks_start_training")}</span>
+          </Link>
+        )}
       </div>
 
       {cards.length > 0 ? (
@@ -186,7 +268,31 @@ export function DeckViewContent({ deckId, lang }: DeckViewContentProps) {
             <ul className="flex flex-col gap-4" aria-label={t("deck_cards_aria")}>
               {filteredCards.map((card) => (
                 <li key={card.id}>
-                  <article className="flex items-start justify-center p-4 bg-surface rounded-xl border border-border">
+                  <article
+                    className={`flex items-start p-4 bg-surface rounded-xl border transition-colors ${
+                      isEditing && selectedIds.has(card.id)
+                        ? "border-[var(--color-primary)] bg-[var(--color-primary-surface)]"
+                        : "border-border"
+                    } ${isEditing ? "cursor-pointer" : ""}`}
+                    onClick={isEditing ? () => toggleCard(card.id) : undefined}
+                  >
+                    {isEditing && (
+                      <div className="shrink-0 mr-3 mt-0.5">
+                        <div
+                          className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${
+                            selectedIds.has(card.id)
+                              ? "bg-[var(--color-primary)] border-[var(--color-primary)]"
+                              : "border-[var(--color-border)] bg-surface-secondary"
+                          }`}
+                        >
+                          {selectedIds.has(card.id) && (
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                              <path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          )}
+                        </div>
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0 flex flex-col gap-2">
                       <p className="font-bold text-base text-text">{card.foreign}</p>
                       <p className="text-sm text-text-secondary">{displayTranslation(card)}</p>
@@ -196,13 +302,6 @@ export function DeckViewContent({ deckId, lang }: DeckViewContentProps) {
                         </span>
                       )}
                     </div>
-                    <IconButton
-                      onClick={() => handleDeleteCard(card.id)}
-                      ariaLabel={t("deck_delete_card_aria")}
-                      variant="secondary"
-                    >
-                      <TrashIcon size={20} />
-                    </IconButton>
                   </article>
                 </li>
               ))}

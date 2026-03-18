@@ -456,7 +456,7 @@ export function DecksPageContent() {
               <p className="text-base text-text-secondary leading-6 whitespace-pre-line">
                 {t("decks_no_custom_decks")}
               </p>
-              <Link href="/" className={getButtonClassName("primary", "md")}>
+              <Link href="/" className={getButtonClassName("primary", "sm", "inline-flex items-center justify-center gap-2 text-center")}>
                 {t("decks_go_to_translator")}
               </Link>
             </div>

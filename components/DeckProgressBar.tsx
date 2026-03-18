@@ -11,16 +11,16 @@ export function DeckProgressBar({
   total,
   className = "",
 }: DeckProgressBarProps) {
-  const percent = total > 0 ? Math.round((learned / total) * 100) : 0;
-  const radius = 22;
+  const percent = total > 0 ? Math.min(100, Math.round((learned / total) * 100)) : 0;
+  const radius = 24;
   const strokeWidth = 4;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (circumference * percent) / 100;
 
   return (
-    <div className={`flex items-center gap-3 ${className}`}>
+    <div className={`shrink-0 flex flex-col ${className}`}>
       <div
-        className="relative inline-flex items-center justify-center"
+        className="relative inline-flex items-center justify-center shrink-0"
         style={{ width: 56, height: 56 }}
         role="progressbar"
         aria-valuenow={learned}

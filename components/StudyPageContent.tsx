@@ -66,7 +66,8 @@ export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
       const displayName = deckId === ALL_CARDS_DECK_ID && lang ? t("decks_all_cards") : found.name;
       setDeck({ ...found, name: displayName });
       const deckCards = getCardsForDeck(user.id, deckId, lang);
-      setCards(deckCards);
+      const unlearnedCards = deckCards.filter((c) => !c.learned);
+      setCards(unlearnedCards);
       setProgress(getDeckProgress(user.id, deckId, lang));
       setCurrentIndex(0);
       setIsFlipped(false);
@@ -94,15 +95,12 @@ export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
       setCardLearned(user.id, currentCard.id, learned);
     }
 
-    const wasLearned = currentCard.learned ?? false;
-    setProgress((prev) => ({
-      ...prev,
-      learned: learned
-        ? prev.learned + 1
-        : wasLearned
-          ? Math.max(0, prev.learned - 1)
-          : prev.learned,
-    }));
+    if (learned) {
+      setProgress((prev) => ({
+        ...prev,
+        learned: Math.min(prev.learned + 1, prev.total),
+      }));
+    }
 
     if (currentIndex < cards.length - 1) {
       setCurrentIndex((i) => i + 1);
@@ -174,35 +172,40 @@ export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
       : `/deck/${deckId}/study`;
 
     return (
-      <div className={`${PAGE_LAYOUT_CLASSES} items-center justify-start min-h-[60vh] gap-6`}>
-        <Image
-          src="/party-popper.png"
-          alt=""
-          width={120}
-          height={120}
-          unoptimized
-        />
-        <h2 className="text-2xl font-semibold text-text md:text-3xl">{t("study_round_complete")}</h2>
-        <p className="text-text-secondary text-center">
-          {t("study_round_complete_desc")}
-        </p>
+      <div className={`${PAGE_LAYOUT_CLASSES} items-center justify-start min-h-[60vh] gap-10`}>
+        <div className="flex flex-col items-center gap-4">
+          <Image
+            src="/party-popper.png"
+            alt=""
+            width={120}
+            height={120}
+            unoptimized
+            style={{ mixBlendMode: "multiply" }}
+          />
+          <h2 className="text-2xl font-semibold text-text md:text-3xl">
+            {t("study_round_complete")}
+          </h2>
+          <p className="text-text-secondary text-center">
+            {t("study_round_complete_desc")}
+          </p>
+        </div>
         <div className="flex flex-col gap-3 w-full max-w-xs">
           <Link
             href={studyHref}
             className={getButtonClassName(
               "primary",
-              "md",
+              "lg",
               "inline-flex items-center justify-center gap-2 text-center w-full"
             )}
           >
-            <PlayIcon className="w-6 h-6" />
+            <PlayIcon className="w-5 h-5" />
             <span>{t("study_repeat")}</span>
           </Link>
           <Link
             href="/decks"
             className={getButtonClassName(
               "secondary",
-              "md",
+              "lg",
               "inline-flex items-center justify-center text-center w-full"
             )}
           >
