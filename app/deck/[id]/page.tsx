@@ -5,9 +5,9 @@ export default async function DeckPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ lang?: string }>;
+  searchParams: Promise<{ lang?: string; targetLang?: string }>;
 }) {
   const { id } = await params;
-  const { lang } = await searchParams;
-  return <DeckViewContent deckId={id} lang={lang} />;
+  const { lang, targetLang } = await searchParams;
+  return <DeckViewContent deckId={id} lang={lang} targetLang={targetLang} />;
 }

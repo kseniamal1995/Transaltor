@@ -47,7 +47,7 @@ export function DropdownMenu({ items, trigger, align = "right" }: DropdownMenuPr
       {open && (
         <ul
           role="menu"
-          className={`absolute top-full mt-1 z-50 bg-surface border border-border rounded-xl shadow-lg py-1 min-w-[250px] ${
+          className={`absolute top-full mt-1 z-50 bg-surface border border-border rounded-xl shadow-lg p-1.5 min-w-[250px] ${
             align === "right" ? "right-0" : "left-0"
           }`}
         >
@@ -59,10 +59,10 @@ export function DropdownMenu({ items, trigger, align = "right" }: DropdownMenuPr
                   setOpen(false);
                   item.onClick();
                 }}
-                className={`w-full text-left px-4 py-2.5 text-sm flex items-center gap-2 transition-colors ${
+                className={`w-full text-left px-3 py-2.5 text-sm flex items-center gap-2 transition-colors rounded-lg ${
                   item.variant === "destructive"
-                    ? "text-[var(--color-error)] hover:bg-red-50"
-                    : "text-text hover:bg-surface-secondary"
+                    ? "text-[var(--color-error)] hover:bg-background"
+                    : "text-text hover:bg-background"
                 }`}
               >
                 {item.icon}

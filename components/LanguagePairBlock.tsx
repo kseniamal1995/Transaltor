@@ -263,8 +263,8 @@ function LangSelect({
                       className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer text-sm transition-colors rounded-lg ${
                         option.code === displayValue
                           ? "bg-primary-muted text-text font-semibold"
-                          : "text-text hover:bg-[var(--color-border)]/30"
-                      } ${i === focusedIndex ? "bg-[var(--color-border)]/50" : ""}`}
+                          : "text-text hover:bg-background"
+                      } ${i === focusedIndex ? "bg-background" : ""}`}
                       onClick={() => {
                         onChange(option.code);
                         setOpen(false);

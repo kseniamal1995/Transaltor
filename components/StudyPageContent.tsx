@@ -32,6 +32,7 @@ interface CardData {
 interface StudyPageContentProps {
   deckId: string;
   lang?: string;
+  targetLang?: string;
 }
 
 const SWIPE_THRESHOLD = 80;
@@ -45,7 +46,7 @@ function formatWordCount(n: number): string {
   return t("decks_word_count_many").replace("{n}", String(n));
 }
 
-export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
+export function StudyPageContent({ deckId, lang, targetLang }: StudyPageContentProps) {
   const [deck, setDeck] = useState<{ id: string; name: string } | null>(null);
   const [cards, setCards] = useState<CardData[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -65,14 +66,14 @@ export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
     if (found) {
       const displayName = deckId === ALL_CARDS_DECK_ID && lang ? t("decks_all_cards") : found.name;
       setDeck({ ...found, name: displayName });
-      const deckCards = getCardsForDeck(user.id, deckId, lang);
+      const deckCards = getCardsForDeck(user.id, deckId, lang, targetLang);
       const unlearnedCards = deckCards.filter((c) => !c.learned);
       setCards(unlearnedCards);
-      setProgress(getDeckProgress(user.id, deckId, lang));
+      setProgress(getDeckProgress(user.id, deckId, lang, targetLang));
       setCurrentIndex(0);
       setIsFlipped(false);
     }
-  }, [deckId, lang]);
+  }, [deckId, lang, targetLang]);
 
   useEffect(() => {
     loadData();
@@ -168,7 +169,7 @@ export function StudyPageContent({ deckId, lang }: StudyPageContentProps) {
 
   if (sessionComplete) {
     const studyHref = lang
-      ? `/deck/${deckId}/study?lang=${encodeURIComponent(lang)}`
+      ? `/deck/${deckId}/study?lang=${encodeURIComponent(lang)}${targetLang ? `&targetLang=${encodeURIComponent(targetLang)}` : ""}`
       : `/deck/${deckId}/study`;
 
     return (

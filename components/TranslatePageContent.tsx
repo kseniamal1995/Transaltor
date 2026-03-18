@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 import {
   addToHistory,
   createDeck,
   getCurrentUser,
   getDecksForUser,
+  isCardDuplicate,
   saveCard,
 } from "@/lib/storage";
 import {
@@ -15,19 +16,14 @@ import {
 } from "@/lib/languages";
 import { translate } from "@/lib/translate";
 import { STORAGE_KEYS } from "@/lib/constants";
-import {
-  canTranslate,
-  incrementGuestUsage,
-  getRemainingTranslations,
-} from "@/lib/usageLimit";
 import { TranslateInput } from "./TranslateInput";
 import { TranslateResult } from "./TranslateResult";
 import { SaveCardForm } from "./SaveCardForm";
 import { LanguagePairBlock } from "./LanguagePairBlock";
 import { PageHeader } from "./PageHeader";
-import { TranslationLimitBanner } from "./TranslationLimitBanner";
 import { t } from "@/lib/strings";
 import { PAGE_LAYOUT_CLASSES } from "@/lib/ui-classes";
+import { useToast } from "./Toast";
 
 const MIN_CHARS_TO_TRANSLATE = 2;
 
@@ -49,11 +45,9 @@ function getLangPair(sourceLang: string, targetLang: string): string {
 }
 
 export function TranslatePageContent() {
-  const isLoggedIn = false;
-
   const [inputValue, setInputValue] = useState("");
   const [sourceLang, setSourceLang] = useState("en");
-  const [targetLang, setTargetLang] = useState(() => getStoredLastTargetLang());
+  const [targetLang, setTargetLang] = useState("ru");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [translatedText, setTranslatedText] = useState<string | null>(null);
@@ -63,21 +57,12 @@ export function TranslatePageContent() {
   const [selectedDeckId, setSelectedDeckId] = useState("");
   const [customTranslation, setCustomTranslation] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const [savedMessage, setSavedMessage] = useState<string | null>(null);
-  const savedMessageTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [remaining, setRemaining] = useState<number>(() => getRemainingTranslations(isLoggedIn));
+  const { showToast } = useToast();
 
-  // Очистка таймера сообщения «Карточка сохранена» при размонтировании
   useEffect(() => {
-    return () => {
-      if (savedMessageTimeoutRef.current) clearTimeout(savedMessageTimeoutRef.current);
-    };
+    const stored = getStoredLastTargetLang();
+    if (stored !== "ru") setTargetLang(stored);
   }, []);
-
-  // Обновлять остаток при изменении статуса авторизации
-  useEffect(() => {
-    setRemaining(getRemainingTranslations(isLoggedIn));
-  }, [isLoggedIn]);
 
   // Загрузка словарей. Повторяем с задержкой: GuestUserSync/ClerkUserSync могут ещё не успеть установить user.
   useEffect(() => {
@@ -115,12 +100,6 @@ export function TranslatePageContent() {
         return;
       }
 
-      if (!canTranslate(isLoggedIn)) {
-        setError(t("limit_reached_error").replace("{n}", String(20)));
-        setRemaining(0);
-        return;
-      }
-
       setIsLoading(true);
       setError(null);
       setSourceText(trimmed);
@@ -138,17 +117,13 @@ export function TranslatePageContent() {
           setSourceLang(langToSave);
         }
 
-        if (!isLoggedIn) {
-          incrementGuestUsage();
-          setRemaining(getRemainingTranslations(false));
-        }
-
         const user = getCurrentUser();
         if (user.id) {
           addToHistory(user.id, {
             foreign: trimmed,
             translation: result.translatedText,
             foreignLanguage: langToSave,
+            translationLanguage: targetLang,
           });
         }
       } catch (err) {
@@ -236,24 +211,25 @@ export function TranslatePageContent() {
     const user = getCurrentUser();
     if (!user.id) return;
 
-    setIsSaving(true);
-    setSavedMessage(null);
-    if (savedMessageTimeoutRef.current) {
-      clearTimeout(savedMessageTimeoutRef.current);
-      savedMessageTimeoutRef.current = null;
+    const deckName = decks.find((d) => d.id === selectedDeckId)?.name ?? "";
+
+    if (isCardDuplicate(user.id, sourceText, selectedDeckId)) {
+      showToast(t("card_duplicate").replace("{deck}", deckName), "error");
+      return;
     }
 
+    setIsSaving(true);
     try {
       saveCard(user.id, {
         foreign: sourceText,
         translation: translatedText,
         customTranslation: customTranslation.trim() || undefined,
         foreignLanguage: detectedLang,
+        translationLanguage: targetLang,
         deckIds: [selectedDeckId],
       });
-      setSavedMessage(t("card_saved"));
+      showToast(t("card_saved").replace("{deck}", deckName));
       setCustomTranslation("");
-      savedMessageTimeoutRef.current = setTimeout(() => setSavedMessage(null), 5000);
     } finally {
       setIsSaving(false);
     }
@@ -305,8 +281,6 @@ export function TranslatePageContent() {
           </div>
         </div>
 
-        {!isLoggedIn && <TranslationLimitBanner remaining={remaining} />}
-
         {translatedText && sourceText && decks.length > 0 && (
           <>
             <SaveCardForm
@@ -319,9 +293,6 @@ export function TranslatePageContent() {
               onSave={handleSaveCard}
               isSaving={isSaving}
             />
-            {savedMessage && (
-              <p className="text-sm text-[var(--color-success)] font-medium">{savedMessage}</p>
-            )}
           </>
         )}
       </div>

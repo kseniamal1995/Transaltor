@@ -2,21 +2,22 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   getCurrentUser,
-  getLanguagesInUse,
+  getLanguagePairsInUse,
   getDecksForLanguage,
   getDeckProgress,
   deleteDeck,
   renameDeck,
-  deleteLanguage,
+  deleteLanguagePair,
+  type LanguagePair,
 } from "@/lib/storage";
 import { getLanguageName, getFlagUrl } from "@/lib/languages";
 import { ALL_CARDS_DECK_ID } from "@/lib/constants";
 import { EmptyStateIllustration } from "./EmptyStateIllustration";
 import { DeckProgressBar } from "./DeckProgressBar";
 import { ChevronDownIcon } from "./icons/ChevronDownIcon";
+import { ArrowRightIcon } from "./icons/ArrowRightIcon";
 import { PlayIcon } from "./icons/PlayIcon";
 import { PAGE_LAYOUT_CLASSES } from "@/lib/ui-classes";
 import { getButtonClassName } from "./Button";
@@ -66,75 +67,20 @@ function FlagIcon({ code, size = 20 }: { code: string; size?: number }) {
   );
 }
 
-/* ───────── Меню ⋮ для карточки языка ───────── */
-interface LanguageCardMenuProps {
-  lang: string;
-  onDelete: () => void;
-}
-
-function LanguageCardMenu({ lang, onDelete }: LanguageCardMenuProps) {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function handleOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", handleOutside);
-    return () => document.removeEventListener("mousedown", handleOutside);
-  }, [open]);
-
-  function toggle(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    setOpen((v) => !v);
-  }
-
-  function pick(e: React.MouseEvent, action: () => void) {
-    e.preventDefault();
-    e.stopPropagation();
-    setOpen(false);
-    action();
-  }
-
-  return (
-    <div ref={ref} className="relative shrink-0">
-      <IconButton
-        onClick={toggle}
-        ariaLabel={t("deck_lang_menu_aria")}
-        variant="secondary"
-      >
-        <DotsVerticalIcon size={20} />
-      </IconButton>
-
-      {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 bg-surface border border-border rounded-xl shadow-md py-1 min-w-[160px]">
-          <button
-            type="button"
-            onClick={(e) => pick(e, onDelete)}
-            className="w-full text-left px-4 py-2.5 text-sm text-[var(--color-error)] hover:bg-tertiary transition-colors"
-          >
-            {t("deck_delete_lang_aria")}
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ───────── Верхняя карточка: язык + общий прогресс ───────── */
+/* ───────── Верхняя карточка: языковая пара + общий прогресс ───────── */
 interface LanguageCardProps {
-  languages: string[];
-  selected: string;
-  onSelect: (lang: string) => void;
-  totalWords: number;
-  totalLearned: number;
+  pairs: LanguagePair[];
+  selected: LanguagePair;
+  onSelect: (pair: LanguagePair) => void;
   studyHref: string;
+  dictHref: string;
 }
 
-function LanguageCard({ languages, selected, onSelect, totalWords, totalLearned, studyHref }: LanguageCardProps) {
+function pairKey(p: LanguagePair): string {
+  return `${p.source}|${p.target}`;
+}
+
+function LanguageCard({ pairs, selected, onSelect, studyHref, dictHref }: LanguageCardProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -147,188 +93,149 @@ function LanguageCard({ languages, selected, onSelect, totalWords, totalLearned,
     return () => document.removeEventListener("mousedown", handleOutside);
   }, [dropdownOpen]);
 
-  const hasMultiple = languages.length > 1;
+  const hasMultiple = pairs.length > 1;
 
   return (
     <div ref={ref} className="bg-surface rounded-2xl border border-border transition-all">
       <div className="px-6 py-5 flex flex-col gap-4">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center justify-between gap-4">
           <div className="flex-1 min-w-0 flex items-center gap-3">
-            <Link href={studyHref} className="flex items-center gap-3 min-w-0 flex-1">
-              <FlagIcon code={selected} size={42} />
-              <div className="flex flex-col min-w-0">
-                <span className="font-semibold text-base text-text truncate">
-                  {getLanguageName(selected)}
-                </span>
-                <span className="text-sm text-text-secondary">
-                  {formatWordCount(totalWords)}
-                </span>
-              </div>
-            </Link>
-            {hasMultiple && (
+            <FlagIcon code={selected.source} size={32} />
+            <div className="relative flex-1 min-w-0">
               <button
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setDropdownOpen((v) => !v);
-                }}
-                className="shrink-0 p-1 rounded-full hover:bg-[var(--color-primary-muted)]"
-                aria-expanded={dropdownOpen}
-                aria-haspopup="listbox"
+                onClick={() => hasMultiple && setDropdownOpen((v) => !v)}
+                className={`font-bold text-base flex items-center gap-1.5 text-left ${hasMultiple ? "cursor-pointer" : "cursor-default"}`}
+                aria-expanded={hasMultiple ? dropdownOpen : undefined}
+                aria-haspopup={hasMultiple ? "listbox" : undefined}
               >
-                <ChevronDownIcon
-                  className={`w-5 h-5 text-text-secondary transition-transform ${
-                    dropdownOpen ? "rotate-180" : ""
-                  }`}
-                />
+                <span className="text-text truncate">{getLanguageName(selected.source)}</span>
+                <ArrowRightIcon size={12} className="text-text-secondary shrink-0" />
+                <span className="text-text-secondary truncate">{getLanguageName(selected.target)}</span>
+                {hasMultiple && (
+                  <ChevronDownIcon
+                    className={`w-4 h-4 text-text-muted shrink-0 transition-transform ${
+                      dropdownOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                )}
               </button>
-            )}
+
+              {dropdownOpen && hasMultiple && (
+                <ul
+                  role="listbox"
+                  onClick={(e) => e.stopPropagation()}
+                  className="absolute left-0 top-full mt-1 z-50 bg-surface border border-border rounded-xl shadow-lg p-1.5 min-w-[250px]"
+                >
+                  {pairs.map((pair) => {
+                    const isActive = pairKey(pair) === pairKey(selected);
+                    return (
+                      <li key={pairKey(pair)}>
+                        <button
+                          type="button"
+                          role="option"
+                          aria-selected={isActive}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onSelect(pair);
+                            setDropdownOpen(false);
+                          }}
+                          className={`w-full text-left flex items-center gap-3 px-3 py-2.5 text-sm transition-colors rounded-lg ${
+                            isActive
+                              ? "bg-primary-muted text-text font-semibold"
+                              : "text-text hover:bg-background"
+                          }`}
+                        >
+                          <FlagIcon code={pair.source} size={20} />
+                          <span className="flex items-center gap-1.5 truncate">
+                            <span>{getLanguageName(pair.source)}</span>
+                            <ArrowRightIcon size={12} className="text-text-secondary shrink-0" />
+                            <span className="text-text-secondary">{getLanguageName(pair.target)}</span>
+                          </span>
+                          <span className="text-text-secondary text-xs ml-auto shrink-0">
+                            {pair.total}
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
           </div>
-          <DeckProgressBar learned={totalLearned} total={totalWords} />
+          <span className="text-sm text-text-secondary shrink-0">
+            {formatWordCount(selected.total)}
+          </span>
         </div>
 
-        {dropdownOpen && hasMultiple && (
-          <ul
-            role="listbox"
-            onClick={(e) => e.stopPropagation()}
-            className="mt-1 z-50 bg-surface border border-border rounded-xl shadow-md py-1 min-w-[200px]"
-          >
-            {languages.map((lang) => (
-              <li key={lang}>
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={lang === selected}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onSelect(lang);
-                    setDropdownOpen(false);
-                  }}
-                  className={`w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-tertiary ${
-                    lang === selected ? "font-semibold text-text" : "text-text"
-                  }`}
-                >
-                  <FlagIcon code={lang} size={20} />
-                  {getLanguageName(lang)}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Link
-            href={studyHref}
-            className={getButtonClassName(
-              "primary",
-              "sm",
-              "inline-flex items-center justify-center gap-2 text-center"
-            )}
-          >
-            <PlayIcon className="w-5 h-5" />
-            <span>{t("decks_start_training")}</span>
-          </Link>
-          <Link
-            href={`/decks/${encodeURIComponent(selected)}`}
-            className={getButtonClassName(
-              "secondary",
-              "sm",
-              "inline-flex items-center justify-center text-sm"
-            )}
-          >
-            {t("decks_open_dictionary")}
-          </Link>
+        <div className="flex items-center gap-3">
+          <div className="flex flex-1 items-center gap-3">
+            <Link
+              href={studyHref}
+              className={getButtonClassName(
+                "primary",
+                "sm",
+                "inline-flex items-center justify-center gap-2 text-center"
+              )}
+            >
+              <PlayIcon className="w-5 h-5" />
+              <span>{t("decks_start_training")}</span>
+            </Link>
+            <Link
+              href={dictHref}
+              className={getButtonClassName(
+                "secondary",
+                "sm",
+                "inline-flex items-center justify-center text-sm"
+              )}
+            >
+              {t("decks_open_dictionary")}
+            </Link>
+          </div>
+          <DeckProgressBar learned={selected.learned} total={selected.total} size="sm" />
         </div>
       </div>
     </div>
   );
 }
 
-/* ───────── Дропдаун ⋮ для кастомного словаря ───────── */
-interface DeckMenuProps {
-  deckId: string;
-  lang: string;
-  onDelete: () => void;
-}
-
-function DeckMenu({ deckId, lang, onDelete }: DeckMenuProps) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function handleOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener("mousedown", handleOutside);
-    return () => document.removeEventListener("mousedown", handleOutside);
-  }, [open]);
-
-  function toggle(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    setOpen((v) => !v);
-  }
-
-  function pick(e: React.MouseEvent, action: () => void) {
-    e.preventDefault();
-    e.stopPropagation();
-    setOpen(false);
-    action();
-  }
-
-  return (
-    <div ref={ref} className="relative">
-      <IconButton
-        onClick={toggle}
-        ariaLabel="Меню словаря"
-        variant="secondary"
-      >
-        <DotsVerticalIcon size={20} />
-      </IconButton>
-
-      {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 bg-surface border border-border rounded-xl shadow-md py-1 min-w-[160px]">
-          <button
-            type="button"
-            onClick={(e) => pick(e, onDelete)}
-            className="w-full text-left px-4 py-2.5 text-sm text-[var(--color-error)] hover:bg-tertiary transition-colors"
-          >
-            {t("deck_menu_delete")}
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
 /* ───────── Главный компонент ───────── */
 export function DecksPageContent() {
-  const [languages, setLanguages] = useState<string[]>([]);
-  const [selectedLang, setSelectedLang] = useState<string>("");
+  const [pairs, setPairs] = useState<LanguagePair[]>([]);
+  const [selectedPair, setSelectedPair] = useState<LanguagePair | null>(null);
   const [decks, setDecks] = useState<DeckData[]>([]);
 
-  useEffect(() => {
+  function loadPairs() {
     const user = getCurrentUser();
     if (!user.id) return;
-    const langs = getLanguagesInUse(user.id);
-    setLanguages(langs);
-    if (langs.length > 0) setSelectedLang(langs[0]);
+    const p = getLanguagePairsInUse(user.id);
+    setPairs(p);
+    if (p.length > 0 && !selectedPair) setSelectedPair(p[0]);
+    if (p.length > 0 && selectedPair) {
+      const still = p.find(
+        (pp) => pp.source === selectedPair.source && pp.target === selectedPair.target,
+      );
+      setSelectedPair(still ?? p[0]);
+    }
+  }
+
+  useEffect(() => {
+    loadPairs();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadDecks = useCallback(() => {
-    if (!selectedLang) return;
+    if (!selectedPair) return;
     const user = getCurrentUser();
     if (!user.id) return;
-    const all = getDecksForLanguage(user.id, selectedLang);
+    const all = getDecksForLanguage(user.id, selectedPair.source);
     const withProgress = all.map((deck) => {
-      const { total, learned } = getDeckProgress(user.id, deck.id, selectedLang);
+      const { total, learned } = getDeckProgress(user.id, deck.id, selectedPair.source, selectedPair.target);
       return { ...deck, total, learned };
     });
     setDecks(withProgress);
-  }, [selectedLang]);
+  }, [selectedPair]);
 
   useEffect(() => {
     loadDecks();
@@ -347,26 +254,22 @@ export function DecksPageContent() {
     if (user.id) { renameDeck(user.id, deckId, newName.trim()); loadDecks(); }
   }
 
-  function handleDeleteLanguage(lang: string) {
-    const langName = getLanguageName(lang);
-    if (!confirm(t("deck_delete_lang_confirm").replace("{lang}", langName))) return;
+  function handleDeletePair() {
+    if (!selectedPair) return;
+    const srcName = getLanguageName(selectedPair.source);
+    const tgtName = getLanguageName(selectedPair.target);
+    const msg = t("deck_delete_pair_confirm")
+      .replace("{source}", srcName)
+      .replace("{target}", tgtName);
+    if (!confirm(msg)) return;
     const user = getCurrentUser();
     if (!user.id) return;
-    deleteLanguage(user.id, lang);
-    const langs = getLanguagesInUse(user.id);
-    setLanguages(langs);
-    setSelectedLang(langs.length > 0 ? langs[0] : "");
+    deleteLanguagePair(user.id, selectedPair.source, selectedPair.target);
+    loadPairs();
   }
 
-  const { total: totalWords, learned: totalLearned } =
-    (() => {
-      const user = getCurrentUser();
-      if (!user.id || !selectedLang) return { total: 0, learned: 0 };
-      return getDeckProgress(user.id, ALL_CARDS_DECK_ID, selectedLang);
-    })();
-
   /* Пустой стейт */
-  if (languages.length === 0) {
+  if (pairs.length === 0) {
     return (
       <div className={`${PAGE_LAYOUT_CLASSES} gap-10`}>
         <div className="w-full flex flex-col p-0">
@@ -379,20 +282,23 @@ export function DecksPageContent() {
     );
   }
 
+  if (!selectedPair) return null;
+
+  const selectedLang = selectedPair.source;
+  const selectedTargetLang = selectedPair.target;
+  const langQueryPart = `lang=${encodeURIComponent(selectedLang)}&targetLang=${encodeURIComponent(selectedTargetLang)}`;
   const customDecks = decks.filter((d) => d.id !== ALL_CARDS_DECK_ID);
 
   return (
     <div className={`${PAGE_LAYOUT_CLASSES} gap-10`}>
       <div className="w-full flex flex-col gap-8 p-0">
-        {/* ── Верхняя карточка: язык + общий прогресс ── */}
+        {/* ── Верхняя карточка: языковая пара + общий прогресс ── */}
         <LanguageCard
-          languages={languages}
-          selected={selectedLang}
-          onSelect={setSelectedLang}
-          totalWords={totalWords}
-          totalLearned={totalLearned}
-          studyHref={`/deck/${ALL_CARDS_DECK_ID}/study?lang=${encodeURIComponent(selectedLang)}`}
-          onDeleteLanguage={handleDeleteLanguage}
+          pairs={pairs}
+          selected={selectedPair}
+          onSelect={setSelectedPair}
+          studyHref={`/deck/${ALL_CARDS_DECK_ID}/study?${langQueryPart}`}
+          dictHref={`/decks/${encodeURIComponent(selectedLang)}?targetLang=${encodeURIComponent(selectedTargetLang)}`}
         />
 
         {/* ── Ваши словари ── */}
@@ -409,42 +315,39 @@ export function DecksPageContent() {
                   className="bg-surface rounded-2xl border border-border transition-all"
                 >
                   <div className="px-6 py-5 flex flex-col gap-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <Link
-                        href={`/deck/${deck.id}/study?lang=${encodeURIComponent(selectedLang)}`}
-                        className="flex-1 min-w-0"
-                      >
-                        <p className="font-semibold text-base text-text truncate">
-                          {deck.name}
-                        </p>
-                        <p className="text-sm text-text-secondary">
-                          {formatWordCount(deck.total)}
-                        </p>
-                      </Link>
-                      <DeckProgressBar learned={deck.learned} total={deck.total} />
+                    <div className="flex items-center justify-between gap-4">
+                      <p className="font-bold text-base text-text truncate flex-1 min-w-0">
+                        {deck.name}
+                      </p>
+                      <span className="text-sm text-text-secondary shrink-0">
+                        {formatWordCount(deck.total)}
+                      </span>
                     </div>
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <Link
-                        href={`/deck/${deck.id}/study?lang=${encodeURIComponent(selectedLang)}`}
-                        className={getButtonClassName(
-                          "primary",
-                          "sm",
-                          "inline-flex items-center justify-center gap-2 text-center"
-                        )}
-                      >
-                        <PlayIcon className="w-5 h-5" />
-                        <span>{t("decks_start_training")}</span>
-                      </Link>
-                      <Link
-                        href={`/deck/${deck.id}${selectedLang ? `?lang=${encodeURIComponent(selectedLang)}` : ""}`}
-                        className={getButtonClassName(
-                          "secondary",
-                          "sm",
-                          "inline-flex items-center justify-center text-sm"
-                        )}
-                      >
-                        {t("decks_open_dictionary")}
-                      </Link>
+                    <div className="flex items-center gap-3">
+                      <div className="flex flex-1 items-center gap-3">
+                        <Link
+                          href={`/deck/${deck.id}/study?${langQueryPart}`}
+                          className={getButtonClassName(
+                            "primary",
+                            "sm",
+                            "inline-flex items-center justify-center gap-2 text-center"
+                          )}
+                        >
+                          <PlayIcon className="w-5 h-5" />
+                          <span>{t("decks_start_training")}</span>
+                        </Link>
+                        <Link
+                          href={`/deck/${deck.id}?${langQueryPart}`}
+                          className={getButtonClassName(
+                            "secondary",
+                            "sm",
+                            "inline-flex items-center justify-center text-sm"
+                          )}
+                        >
+                          {t("decks_open_dictionary")}
+                        </Link>
+                      </div>
+                      <DeckProgressBar learned={deck.learned} total={deck.total} size="sm" />
                     </div>
                   </div>
                 </div>

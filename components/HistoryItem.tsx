@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import type { Deck } from "@/types";
-import { createDeck, getCurrentUser, saveCard } from "@/lib/storage";
-import { SaveCardForm } from "./SaveCardForm";
-import { TranslationCard } from "./TranslationCard";
-import { IconButton } from "./IconButton";
-import { TrashIcon } from "./icons/TrashIcon";
+import { getCurrentUser, isCardDuplicate, saveCard } from "@/lib/storage";
+import { DropdownMenu } from "./DropdownMenu";
 import { t } from "@/lib/strings";
+import { IconButton } from "./IconButton";
+import { BookmarkIcon } from "./icons/BookmarkIcon";
+import { useToast } from "./Toast";
 
 interface HistoryItemProps {
   id: string;
@@ -15,96 +14,72 @@ interface HistoryItemProps {
   translation: string;
   customTranslation?: string;
   foreignLanguage?: string;
+  translationLanguage?: string;
   decks: Deck[];
   onSaved: () => void;
-  onDelete: () => void;
 }
 
 export function HistoryItem({
-  id,
   foreign,
   translation,
+  customTranslation,
   foreignLanguage,
+  translationLanguage,
   decks,
   onSaved,
-  onDelete,
 }: HistoryItemProps) {
-  const [showForm, setShowForm] = useState(false);
-  const [selectedDeckId, setSelectedDeckId] = useState(decks[0]?.id ?? "");
-  const [customTranslation, setCustomTranslation] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
+  const { showToast } = useToast();
 
-  useEffect(() => {
-    if (decks.length > 0 && !decks.some((d) => d.id === selectedDeckId)) {
-      setSelectedDeckId(decks[0].id);
-    }
-  }, [decks, selectedDeckId]);
-
-  function handleSave() {
+  function handleSaveToDeck(deckId: string) {
     const user = getCurrentUser();
     if (!user.id) return;
 
-    setIsSaving(true);
+    const deckName = decks.find((d) => d.id === deckId)?.name ?? "";
+
+    if (isCardDuplicate(user.id, foreign, deckId)) {
+      showToast(t("card_duplicate").replace("{deck}", deckName), "error");
+      return;
+    }
+
     saveCard(user.id, {
       foreign,
       translation,
-      customTranslation: customTranslation.trim() || undefined,
+      customTranslation: customTranslation?.trim() || undefined,
       foreignLanguage,
-      deckIds: [selectedDeckId],
+      translationLanguage,
+      deckIds: [deckId],
     });
-    setIsSaving(false);
+    showToast(t("card_saved").replace("{deck}", deckName));
     onSaved();
-    setShowForm(false);
-    setCustomTranslation("");
   }
 
-  if (decks.length === 0) return null;
+  const displayTranslation = customTranslation?.trim() || translation;
 
-  const displayTranslation = customTranslation.trim() || translation;
+  const deckItems = decks.map((deck) => ({
+    label: deck.name,
+    onClick: () => handleSaveToDeck(deck.id),
+  }));
 
   return (
-    <article className="p-4 bg-surface rounded-xl border border-border relative">
-      <IconButton
-        onClick={onDelete}
-        ariaLabel={t("history_delete_aria")}
-        className="absolute top-4 right-4 hover:text-[var(--color-error)] hover:bg-[var(--color-primary-muted)]"
-      >
-        <TrashIcon size={18} />
-      </IconButton>
-      <div className="flex flex-col gap-2 pr-8">
-        {!showForm ? (
-          <>
-            <p className="text-base font-medium text-text">{foreign}</p>
-            <p className="text-base text-text-secondary">{displayTranslation}</p>
-            <button
-              type="button"
-              onClick={() => setShowForm(true)}
-              className="self-start px-3 py-1.5 text-sm font-medium text-[var(--color-primary)] hover:text-[var(--color-primary-hover)] hover:bg-[var(--color-primary-muted)] rounded-xl transition-colors"
-            >
-              {t("card_save_title")}
-            </button>
-          </>
-        ) : (
-          <>
-            <div className="bg-surface-secondary border border-border rounded-xl">
-              <TranslationCard
-                defaultTranslation={translation}
-                customTranslation={customTranslation}
-                onCustomTranslationChange={setCustomTranslation}
-                lang={foreignLanguage}
-              />
-            </div>
-            <SaveCardForm
-              decks={decks}
-              selectedDeckId={selectedDeckId}
-              onDeckChange={setSelectedDeckId}
-              onCreateDeck={(name) => createDeck(getCurrentUser().id, name)}
-              onDeckCreated={onSaved}
-              onSave={handleSave}
-              onCancel={() => setShowForm(false)}
-              isSaving={isSaving}
-            />
-          </>
+    <article className="p-4 bg-surface rounded-xl border border-border">
+      <div className="flex items-start gap-3">
+        <div className="flex flex-col gap-1 flex-1 min-w-0">
+          <p className="text-base font-medium text-text">{foreign}</p>
+          <p className="text-base text-text-secondary">{displayTranslation}</p>
+        </div>
+        {decks.length > 0 && (
+          <DropdownMenu
+            items={deckItems}
+            align="right"
+            trigger={
+              <IconButton
+                onClick={() => {}}
+                ariaLabel={t("history_save_to")}
+              >
+                <BookmarkIcon className="w-5 h-5" />
+              </IconButton>
+            }
+          />
         )}
       </div>
     </article>

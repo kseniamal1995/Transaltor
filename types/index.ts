@@ -8,6 +8,7 @@ export interface Card {
   translation: string;
   customTranslation?: string;
   foreignLanguage?: string;
+  translationLanguage?: string;
   imageUrl?: string;
   examples?: string[];
   deckIds: string[];
@@ -27,5 +28,6 @@ export interface TranslationHistoryItem {
   translation: string;
   customTranslation?: string;
   foreignLanguage?: string;
+  translationLanguage?: string;
   createdAt: string;
 }

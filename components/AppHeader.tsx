@@ -85,9 +85,9 @@ export function AppHeader() {
     <>
       <header className="flex items-center justify-between gap-3 pl-8 pr-6 pt-4 pb-4 md:px-8 md:pt-4 md:pb-[52px]">
         {/* Слева: серый кружок (лого) 32px на мобилке, лого на десктопе */}
-        <div className="flex items-center shrink-0">
+        <div className="flex items-center shrink-0 md:w-[90px]">
           <div className="md:hidden w-8 h-8 rounded-full bg-[var(--color-border)] shrink-0" aria-hidden />
-          <div className="hidden md:block w-12 h-12 rounded-full bg-[var(--color-border)] shrink-0" aria-hidden />
+          <img src="/logo.svg" alt="" className="hidden md:block h-10 shrink-0" aria-hidden="true" draggable={false} />
         </div>
 
         {/* Навигация — только на десктопе */}
@@ -108,7 +108,7 @@ export function AppHeader() {
         </nav>
 
         {/* Справа: иконка меню на мобилке, аккаунт на десктопе */}
-        <div className="flex items-center shrink-0">
+        <div className="flex items-center shrink-0 md:w-[90px] md:justify-end">
           <button
             type="button"
             onClick={() => setMobileMenuOpen(true)}
@@ -120,7 +120,7 @@ export function AppHeader() {
           </button>
           <div className="hidden md:flex items-center shrink-0">
             <div
-              className="flex items-center justify-center w-[48px] h-[48px] rounded-full bg-[var(--color-border)] text-text-muted shrink-0"
+              className="flex items-center justify-center w-10 h-10 rounded-full bg-[var(--color-border)] text-text-muted shrink-0"
               aria-label={t("nav_sign_in")}
             >
               <UserIcon className="w-6 h-6" />

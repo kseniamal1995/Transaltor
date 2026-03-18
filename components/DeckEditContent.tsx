@@ -18,6 +18,7 @@ import { TrashIcon } from "./icons/TrashIcon";
 interface DeckEditContentProps {
   deckId: string;
   lang?: string;
+  targetLang?: string;
 }
 
 type CardItem = {
@@ -28,7 +29,7 @@ type CardItem = {
   foreignLanguage?: string;
 };
 
-export function DeckEditContent({ deckId, lang }: DeckEditContentProps) {
+export function DeckEditContent({ deckId, lang, targetLang }: DeckEditContentProps) {
   const [deck, setDeck] = useState<{ id: string; name: string } | null>(null);
   const [cards, setCards] = useState<CardItem[]>([]);
 
@@ -41,7 +42,7 @@ export function DeckEditContent({ deckId, lang }: DeckEditContentProps) {
     if (found) {
       const displayName = deckId === ALL_CARDS_DECK_ID && lang ? t("decks_all_cards") : found.name;
       setDeck({ ...found, name: displayName });
-      const deckCards = getCardsForDeck(user.id, deckId, lang);
+      const deckCards = getCardsForDeck(user.id, deckId, lang, targetLang);
       setCards(deckCards);
     }
   }

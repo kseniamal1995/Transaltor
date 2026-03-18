@@ -3,6 +3,7 @@
 import type { Card, Deck, TranslationHistoryItem, User } from "@/types";
 import { normalizeLanguageCode } from "@/lib/languages";
 import { ALL_CARDS_DECK_ID, STORAGE_KEYS } from "./constants";
+import { t } from "@/lib/strings";
 
 function generateId(): string {
   return crypto.randomUUID();
@@ -73,9 +74,16 @@ export function getDecksForUser(userId: string): Deck[] {
   const decks = getDecks(userId);
   if (decks.length === 0) {
     ensureDefaultDeck(userId);
-    return getDecks(userId);
+    return getDecks(userId).map(localizeAllCardsDeck);
   }
-  return decks;
+  return decks.map(localizeAllCardsDeck);
+}
+
+function localizeAllCardsDeck(deck: Deck): Deck {
+  if (deck.id === ALL_CARDS_DECK_ID) {
+    return { ...deck, name: t("decks_all_cards") };
+  }
+  return deck;
 }
 
 export function createDeck(userId: string, name: string): Deck {
@@ -131,6 +139,10 @@ export function removeFromHistory(userId: string, itemId: string): void {
   );
 }
 
+export function clearHistory(userId: string): void {
+  localStorage.setItem(getStorageKey(userId, "history"), JSON.stringify([]));
+}
+
 export function getCards(userId: string): Card[] {
   if (typeof window === "undefined") return [];
   const raw = localStorage.getItem(getStorageKey(userId, "cards"));
@@ -149,7 +161,8 @@ export function getCards(userId: string): Card[] {
 export function getCardsForDeck(
   userId: string,
   deckId: string,
-  languageFilter?: string
+  languageFilter?: string,
+  translationLanguageFilter?: string,
 ): Card[] {
   const cards = getCards(userId);
   let filtered =
@@ -163,15 +176,22 @@ export function getCardsForDeck(
         normalizeLanguageCode(c.foreignLanguage ?? "en") === languageFilter
     );
   }
+  if (translationLanguageFilter) {
+    filtered = filtered.filter(
+      (c) =>
+        normalizeLanguageCode(c.translationLanguage ?? "ru") === translationLanguageFilter
+    );
+  }
   return filtered;
 }
 
 export function getDeckProgress(
   userId: string,
   deckId: string,
-  languageFilter?: string
+  languageFilter?: string,
+  translationLanguageFilter?: string,
 ): { total: number; learned: number } {
-  const cards = getCardsForDeck(userId, deckId, languageFilter);
+  const cards = getCardsForDeck(userId, deckId, languageFilter, translationLanguageFilter);
   const learned = cards.filter((c) => c.learned).length;
   return { total: cards.length, learned };
 }
@@ -187,6 +207,54 @@ export function getLanguagesInUse(userId: string): string[] {
     }
   });
   return Array.from(langs).sort();
+}
+
+export interface LanguagePair {
+  source: string;
+  target: string;
+  total: number;
+  learned: number;
+}
+
+export function getLanguagePairsInUse(userId: string): LanguagePair[] {
+  const cards = getCards(userId);
+  const pairMap = new Map<string, { total: number; learned: number }>();
+
+  cards.forEach((c) => {
+    const src = normalizeLanguageCode(c.foreignLanguage ?? "en");
+    const tgt = normalizeLanguageCode(c.translationLanguage ?? "ru");
+    if (src === "auto") return;
+    const key = `${src}|${tgt}`;
+    const existing = pairMap.get(key) ?? { total: 0, learned: 0 };
+    existing.total++;
+    if (c.learned) existing.learned++;
+    pairMap.set(key, existing);
+  });
+
+  const pairs: LanguagePair[] = [];
+  pairMap.forEach((stats, key) => {
+    const [source, target] = key.split("|");
+    pairs.push({ source, target, ...stats });
+  });
+
+  pairs.sort((a, b) => {
+    if (a.target !== b.target) return a.target.localeCompare(b.target);
+    return a.source.localeCompare(b.source);
+  });
+
+  return pairs;
+}
+
+export function deleteLanguagePair(userId: string, source: string, target: string): void {
+  const cards = getCards(userId);
+  const normalizedSrc = normalizeLanguageCode(source);
+  const normalizedTgt = normalizeLanguageCode(target);
+  const updated = cards.filter(
+    (c) =>
+      normalizeLanguageCode(c.foreignLanguage ?? "en") !== normalizedSrc ||
+      normalizeLanguageCode(c.translationLanguage ?? "ru") !== normalizedTgt
+  );
+  localStorage.setItem(getStorageKey(userId, "cards"), JSON.stringify(updated));
 }
 
 /** Returns decks that have at least one card in the given language. Always includes ALL_CARDS_DECK_ID. */
@@ -223,6 +291,14 @@ export function getDecksForLanguage(
   return result;
 }
 
+export function isCardDuplicate(userId: string, foreign: string, deckId: string): boolean {
+  const cards = getCards(userId);
+  const normalizedForeign = foreign.trim().toLowerCase();
+  return cards.some(
+    (c) => c.foreign.trim().toLowerCase() === normalizedForeign && c.deckIds.includes(deckId),
+  );
+}
+
 export function saveCard(
   userId: string,
   card: Omit<Card, "id" | "createdAt" | "learned">
@@ -233,9 +309,15 @@ export function saveCard(
     : undefined;
   const langToSave =
     foreignLang && foreignLang !== "auto" ? foreignLang : undefined;
+  const targetLang = card.translationLanguage
+    ? normalizeLanguageCode(card.translationLanguage)
+    : undefined;
+  const targetToSave =
+    targetLang && targetLang !== "auto" ? targetLang : undefined;
   const newCard: Card = {
     ...card,
     foreignLanguage: langToSave ?? card.foreignLanguage,
+    translationLanguage: targetToSave ?? card.translationLanguage,
     id: generateId(),
     learned: false,
     createdAt: new Date().toISOString(),

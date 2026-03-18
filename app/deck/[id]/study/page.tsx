@@ -5,9 +5,9 @@ export default async function StudyPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ lang?: string }>;
+  searchParams: Promise<{ lang?: string; targetLang?: string }>;
 }) {
   const { id } = await params;
-  const { lang } = await searchParams;
-  return <StudyPageContent deckId={id} lang={lang} />;
+  const { lang, targetLang } = await searchParams;
+  return <StudyPageContent deckId={id} lang={lang} targetLang={targetLang} />;
 }

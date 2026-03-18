@@ -3,6 +3,7 @@ import { Manrope, Zen_Antique } from "next/font/google";
 import "./globals.css";
 import { GuestUserSync } from "@/components/GuestUserSync";
 import { AppHeader } from "@/components/AppHeader";
+import { ToastProvider } from "@/components/Toast";
 
 const manrope = Manrope({ subsets: ["latin", "cyrillic"], variable: "--font-manrope" });
 const zenAntique = Zen_Antique({ subsets: ["latin"], weight: "400", variable: "--font-zen-antique" });
@@ -26,8 +27,10 @@ export default function RootLayout({
     <html lang="ru" className={`h-full ${manrope.variable} ${zenAntique.variable}`}>
       <body className="min-h-screen h-full bg-[var(--color-background)] text-[var(--color-text)] antialiased font-sans">
         <GuestUserSync>
-          <AppHeader />
-          <main className="min-h-screen">{children}</main>
+          <ToastProvider>
+            <AppHeader />
+            <main className="min-h-screen">{children}</main>
+          </ToastProvider>
         </GuestUserSync>
       </body>
     </html>

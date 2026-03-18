@@ -51,7 +51,8 @@ const translations: Record<Locale, Record<string, string>> = {
     result_retry: "Повторить",
 
     // Сохранение карточки
-    card_saved: "Карточка сохранена!",
+    card_saved: "Сохранено в словарь «{deck}»",
+    card_duplicate: "Это слово уже есть в словаре «{deck}»",
     card_save: "Сохранить",
     card_saving: "Сохранение...",
     card_save_aria: "Сохранить как карточку",
@@ -100,8 +101,13 @@ const translations: Record<Locale, Record<string, string>> = {
     history_empty: "Здесь будет ваша история переводов",
     history_aria: "Список переводов",
     history_delete_aria: "Удалить из истории",
+    history_clear: "Очистить историю",
+    history_clear_confirm: "Удалить всю историю переводов? Это действие необратимо.",
+    history_save_to: "Сохранить",
+    history_saved: "Сохранено!",
     history_search_placeholder: "Поиск по истории",
     history_search_no_results: "Ничего не найдено",
+    show_more: "Показать ещё",
 
     // Изучение
     study_show_word: "Показать слово",
@@ -118,6 +124,7 @@ const translations: Record<Locale, Record<string, string>> = {
     lang_label: "Язык",
 
     // Прочее
+    deck_delete_pair_confirm: "Удалить все карточки «{source} → {target}»? Это действие необратимо.",
     deck_delete_lang_aria: "Удалить словарь",
     deck_delete_lang_confirm: "Удалить словарь «{lang}»? Все карточки по этому языку будут удалены.",
     deck_delete_deck_aria: "Удалить словарь",
@@ -166,7 +173,8 @@ const translations: Record<Locale, Record<string, string>> = {
     result_placeholder: "Translation will appear here",
     result_loading: "Translating...",
     result_retry: "Retry",
-    card_saved: "Card saved!",
+    card_saved: "Saved to dictionary \"{deck}\"",
+    card_duplicate: "This word is already in \"{deck}\"",
     card_save: "Save",
     card_saving: "Saving...",
     card_save_aria: "Save as card",
@@ -211,8 +219,13 @@ const translations: Record<Locale, Record<string, string>> = {
     history_empty: "Your translation history will be here",
     history_aria: "Translation list",
     history_delete_aria: "Remove from history",
+    history_clear: "Clear history",
+    history_clear_confirm: "Delete all translation history? This cannot be undone.",
+    history_save_to: "Save",
+    history_saved: "Saved!",
     history_search_placeholder: "Search history",
     history_search_no_results: "No results found",
+    show_more: "Show more",
     study_show_word: "Show word",
     study_show_translation: "Show translation",
     study_speak_aria: "Speak",
@@ -223,6 +236,7 @@ const translations: Record<Locale, Record<string, string>> = {
     study_repeat: "Repeat",
     study_back_to_decks: "Back to dictionaries",
     lang_label: "Language",
+    deck_delete_pair_confirm: "Delete all \"{source} → {target}\" cards? This cannot be undone.",
     deck_delete_lang_aria: "Delete dictionary",
     deck_delete_lang_confirm: "Delete dictionary \"{lang}\"? All cards for this language will be removed.",
     deck_delete_deck_aria: "Delete dictionary",

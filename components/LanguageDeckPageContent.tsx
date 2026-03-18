@@ -8,6 +8,7 @@ import {
   getCardsForDeck,
   deleteCard,
   deleteLanguage,
+  deleteLanguagePair,
   getDeckProgress,
 } from "@/lib/storage";
 import { ALL_CARDS_DECK_ID } from "@/lib/constants";
@@ -27,6 +28,7 @@ import { PlayIcon } from "./icons/PlayIcon";
 
 interface LanguageDeckPageContentProps {
   lang: string;
+  targetLang?: string;
 }
 
 function FlagIcon({ code, size = 24 }: { code: string; size?: number }) {
@@ -73,21 +75,22 @@ type CardItem = {
   foreignLanguage?: string;
 };
 
-export function LanguageDeckPageContent({ lang }: LanguageDeckPageContentProps) {
+export function LanguageDeckPageContent({ lang, targetLang }: LanguageDeckPageContentProps) {
   const [cards, setCards] = useState<CardItem[]>([]);
   const [query, setQuery] = useState("");
   const [progress, setProgress] = useState({ total: 0, learned: 0 });
   const [isEditing, setIsEditing] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [visibleCount, setVisibleCount] = useState(10);
   const router = useRouter();
 
   const loadCards = useCallback(() => {
     const user = getCurrentUser();
     if (!user.id) return;
-    const deckCards = getCardsForDeck(user.id, ALL_CARDS_DECK_ID, lang);
+    const deckCards = getCardsForDeck(user.id, ALL_CARDS_DECK_ID, lang, targetLang);
     setCards(deckCards);
-    setProgress(getDeckProgress(user.id, ALL_CARDS_DECK_ID, lang));
-  }, [lang]);
+    setProgress(getDeckProgress(user.id, ALL_CARDS_DECK_ID, lang, targetLang));
+  }, [lang, targetLang]);
 
   useEffect(() => {
     loadCards();
@@ -98,9 +101,19 @@ export function LanguageDeckPageContent({ lang }: LanguageDeckPageContentProps) 
   function handleDeleteLanguage() {
     const user = getCurrentUser();
     if (!user.id) return;
-    const langName = getLanguageName(lang);
-    if (!confirm(t("deck_delete_lang_confirm").replace("{lang}", langName))) return;
-    deleteLanguage(user.id, lang);
+    if (targetLang) {
+      const srcName = getLanguageName(lang);
+      const tgtName = getLanguageName(targetLang);
+      const msg = t("deck_delete_pair_confirm")
+        .replace("{source}", srcName)
+        .replace("{target}", tgtName);
+      if (!confirm(msg)) return;
+      deleteLanguagePair(user.id, lang, targetLang);
+    } else {
+      const langName = getLanguageName(lang);
+      if (!confirm(t("deck_delete_lang_confirm").replace("{lang}", langName))) return;
+      deleteLanguage(user.id, lang);
+    }
     router.push("/decks");
   }
 
@@ -147,7 +160,7 @@ export function LanguageDeckPageContent({ lang }: LanguageDeckPageContentProps) 
           return haystack.includes(query.trim().toLowerCase());
         });
 
-  const studyHref = `/deck/${ALL_CARDS_DECK_ID}/study?lang=${encodeURIComponent(lang)}`;
+  const studyHref = `/deck/${ALL_CARDS_DECK_ID}/study?lang=${encodeURIComponent(lang)}${targetLang ? `&targetLang=${encodeURIComponent(targetLang)}` : ""}`;
 
   const menuItems = [
     {
@@ -182,7 +195,7 @@ export function LanguageDeckPageContent({ lang }: LanguageDeckPageContentProps) 
           <DeckProgressBar learned={progress.learned} total={progress.total} />
           <div className="flex flex-col flex-1 min-w-0">
             <h2 className="font-display text-h2 font-normal text-text leading-normal">
-              {getLanguageName(lang)}
+              {targetLang ? `${getLanguageName(lang)} → ${getLanguageName(targetLang)}` : getLanguageName(lang)}
             </h2>
             <span className="text-sm text-text-secondary">
               {formatWordCount(progress.total)}
@@ -251,49 +264,60 @@ export function LanguageDeckPageContent({ lang }: LanguageDeckPageContentProps) 
             <input
               type="text"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => { setQuery(e.target.value); setVisibleCount(10); }}
               placeholder={t("lang_search_placeholder")}
               className="flex-1 min-w-0 bg-transparent text-base text-text placeholder:text-text-secondary focus:outline-none"
             />
           </div>
 
           {filteredCards.length > 0 ? (
-            <ul className="flex flex-col gap-3" aria-label={t("deck_cards_aria")}>
-              {filteredCards.map((card) => (
-                <li key={card.id}>
-                  <article
-                    className={`flex items-start p-4 bg-surface rounded-xl border transition-colors ${
-                      isEditing && selectedIds.has(card.id)
-                        ? "border-[var(--color-primary)] bg-[var(--color-primary-surface)]"
-                        : "border-border"
-                    } ${isEditing ? "cursor-pointer" : ""}`}
-                    onClick={isEditing ? () => toggleCard(card.id) : undefined}
-                  >
-                    {isEditing && (
-                      <div className="shrink-0 mr-3 mt-0.5">
-                        <div
-                          className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${
-                            selectedIds.has(card.id)
-                              ? "bg-[var(--color-primary)] border-[var(--color-primary)]"
-                              : "border-[var(--color-border)] bg-surface-secondary"
-                          }`}
-                        >
-                          {selectedIds.has(card.id) && (
-                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                              <path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          )}
+            <>
+              <ul className="flex flex-col gap-3" aria-label={t("deck_cards_aria")}>
+                {filteredCards.slice(0, visibleCount).map((card) => (
+                  <li key={card.id}>
+                    <article
+                      className={`flex items-start p-4 bg-surface rounded-xl border transition-colors ${
+                        isEditing && selectedIds.has(card.id)
+                          ? "border-[var(--color-primary)] bg-[var(--color-primary-surface)]"
+                          : "border-border"
+                      } ${isEditing ? "cursor-pointer" : ""}`}
+                      onClick={isEditing ? () => toggleCard(card.id) : undefined}
+                    >
+                      {isEditing && (
+                        <div className="shrink-0 mr-3 mt-0.5">
+                          <div
+                            className={`w-5 h-5 rounded-md border flex items-center justify-center transition-colors ${
+                              selectedIds.has(card.id)
+                                ? "bg-[var(--color-primary)] border-[var(--color-primary)]"
+                                : "border-[var(--color-border)] bg-surface-secondary"
+                            }`}
+                          >
+                            {selectedIds.has(card.id) && (
+                              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                <path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            )}
+                          </div>
                         </div>
+                      )}
+                      <div className="flex-1 min-w-0 flex flex-col gap-2">
+                        <p className="font-bold text-base text-text">{card.foreign}</p>
+                        <p className="text-sm text-text-secondary">{displayTranslation(card)}</p>
                       </div>
-                    )}
-                    <div className="flex-1 min-w-0 flex flex-col gap-2">
-                      <p className="font-bold text-base text-text">{card.foreign}</p>
-                      <p className="text-sm text-text-secondary">{displayTranslation(card)}</p>
-                    </div>
-                  </article>
-                </li>
-              ))}
-            </ul>
+                    </article>
+                  </li>
+                ))}
+              </ul>
+              {visibleCount < filteredCards.length && (
+                <button
+                  type="button"
+                  onClick={() => setVisibleCount((prev) => prev + 10)}
+                  className="self-center px-4 py-2 text-sm font-medium text-text-secondary hover:text-text transition-colors"
+                >
+                  {t("show_more")}
+                </button>
+              )}
+            </>
           ) : (
             <p className="text-text-secondary">{t("deck_search_no_results")}</p>
           )}

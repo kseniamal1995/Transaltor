@@ -29,6 +29,7 @@ import { PlayIcon } from "./icons/PlayIcon";
 interface DeckViewContentProps {
   deckId: string;
   lang?: string;
+  targetLang?: string;
 }
 
 function formatWordCount(n: number): string {
@@ -48,7 +49,7 @@ type CardItem = {
   foreignLanguage?: string;
 };
 
-export function DeckViewContent({ deckId, lang }: DeckViewContentProps) {
+export function DeckViewContent({ deckId, lang, targetLang }: DeckViewContentProps) {
   const [deck, setDeck] = useState<{ id: string; name: string } | null>(null);
   const [cards, setCards] = useState<CardItem[]>([]);
   const [query, setQuery] = useState("");
@@ -68,9 +69,9 @@ export function DeckViewContent({ deckId, lang }: DeckViewContentProps) {
     const displayName =
       deckId === ALL_CARDS_DECK_ID && lang ? t("decks_all_cards") : found.name;
     setDeck({ ...found, name: displayName });
-    setCards(getCardsForDeck(user.id, deckId, lang));
-    setProgress(getDeckProgress(user.id, deckId, lang));
-  }, [deckId, lang]);
+    setCards(getCardsForDeck(user.id, deckId, lang, targetLang));
+    setProgress(getDeckProgress(user.id, deckId, lang, targetLang));
+  }, [deckId, lang, targetLang]);
 
   useEffect(() => {
     loadData();
@@ -101,7 +102,7 @@ export function DeckViewContent({ deckId, lang }: DeckViewContentProps) {
 
   function handleDeleteDeck() {
     const user = getCurrentUser();
-    if (!user.id) return;
+    if (!user.id || !deck) return;
     if (!confirm(t("deck_delete_deck_confirm").replace("{name}", deck.name))) return;
     deleteDeck(user.id, deckId);
     router.push("/decks");
@@ -151,7 +152,7 @@ export function DeckViewContent({ deckId, lang }: DeckViewContentProps) {
         });
 
   const studyHref = lang
-    ? `/deck/${deckId}/study?lang=${encodeURIComponent(lang)}`
+    ? `/deck/${deckId}/study?lang=${encodeURIComponent(lang)}${targetLang ? `&targetLang=${encodeURIComponent(targetLang)}` : ""}`
     : `/deck/${deckId}/study`;
 
   const menuItems = [
