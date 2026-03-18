@@ -8,6 +8,7 @@ interface StudyCardProps {
   isFlipped: boolean;
   onFlip: () => void;
   swipeOffset?: number;
+  disableTransition?: boolean;
   className?: string;
 }
 
@@ -17,6 +18,7 @@ export function StudyCard({
   isFlipped,
   onFlip,
   swipeOffset = 0,
+  disableTransition = false,
   className = "",
 }: StudyCardProps) {
   return (
@@ -30,7 +32,7 @@ export function StudyCard({
         className="relative w-full h-full min-h-[220px]"
         style={{
           transform: `translateX(${swipeOffset}px)`,
-          transition: swipeOffset === 0 ? "transform 0.3s ease-out" : "none",
+          transition: disableTransition ? "none" : (swipeOffset === 0 ? "transform 0.3s ease-out" : "none"),
         }}
       >
         <div

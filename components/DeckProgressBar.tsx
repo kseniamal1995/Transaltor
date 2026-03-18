@@ -16,8 +16,8 @@ export function DeckProgressBar({
   const percent = total > 0 ? Math.min(100, Math.round((learned / total) * 100)) : 0;
 
   const isSm = size === "sm";
-  const svgSize = isSm ? 32 : 56;
-  const radius = isSm ? 13 : 24;
+  const svgSize = isSm ? 24 : 56;
+  const radius = isSm ? 9 : 24;
   const strokeWidth = isSm ? 3 : 4;
   const center = svgSize / 2;
   const circumference = 2 * Math.PI * radius;

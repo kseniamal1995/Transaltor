@@ -343,6 +343,22 @@ export function setCardLearned(userId: string, cardId: string, learned: boolean)
   updateCard(userId, { ...card, learned });
 }
 
+export function resetDeckProgress(
+  userId: string,
+  deckId: string,
+  languageFilter?: string,
+  translationLanguageFilter?: string,
+): void {
+  const allCards = getCards(userId);
+  const deckCardIds = new Set(
+    getCardsForDeck(userId, deckId, languageFilter, translationLanguageFilter).map((c) => c.id),
+  );
+  const updated = allCards.map((c) =>
+    deckCardIds.has(c.id) ? { ...c, learned: false } : c,
+  );
+  localStorage.setItem(getStorageKey(userId, "cards"), JSON.stringify(updated));
+}
+
 export function deleteCard(userId: string, cardId: string): void {
   const cards = getCards(userId);
   const updated = cards.filter((c) => c.id !== cardId);

@@ -2,11 +2,15 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   getCurrentUser,
   getLanguagePairsInUse,
   getDecksForLanguage,
   getDeckProgress,
+  getCardsForDeck,
+  resetDeckProgress,
   deleteDeck,
   renameDeck,
   deleteLanguagePair,
@@ -18,9 +22,10 @@ import { EmptyStateIllustration } from "./EmptyStateIllustration";
 import { DeckProgressBar } from "./DeckProgressBar";
 import { ChevronDownIcon } from "./icons/ChevronDownIcon";
 import { ArrowRightIcon } from "./icons/ArrowRightIcon";
+import { CardsIcon } from "./icons/CardsIcon";
 import { PlayIcon } from "./icons/PlayIcon";
 import { PAGE_LAYOUT_CLASSES } from "@/lib/ui-classes";
-import { getButtonClassName } from "./Button";
+import { getButtonClassName, Button } from "./Button";
 import { t } from "@/lib/strings";
 
 interface DeckData {
@@ -72,7 +77,7 @@ interface LanguageCardProps {
   pairs: LanguagePair[];
   selected: LanguagePair;
   onSelect: (pair: LanguagePair) => void;
-  studyHref: string;
+  onStudyClick: () => void;
   dictHref: string;
 }
 
@@ -80,7 +85,7 @@ function pairKey(p: LanguagePair): string {
   return `${p.source}|${p.target}`;
 }
 
-function LanguageCard({ pairs, selected, onSelect, studyHref, dictHref }: LanguageCardProps) {
+function LanguageCard({ pairs, selected, onSelect, onStudyClick, dictHref }: LanguageCardProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -97,11 +102,11 @@ function LanguageCard({ pairs, selected, onSelect, studyHref, dictHref }: Langua
 
   return (
     <div ref={ref} className="bg-surface rounded-2xl border border-border transition-all">
-      <div className="px-6 py-5 flex flex-col gap-4">
+      <div className="px-6 py-5 flex flex-col gap-6">
         <div className="flex items-center justify-between gap-4">
-          <div className="flex-1 min-w-0 flex items-center gap-3">
-            <FlagIcon code={selected.source} size={32} />
-            <div className="relative flex-1 min-w-0">
+          <div className="flex-1 min-w-0 flex items-center gap-3 relative">
+            <FlagIcon code={selected.source} size={24} />
+            <div className="flex-1 min-w-0">
               <button
                 type="button"
                 onClick={() => hasMultiple && setDropdownOpen((v) => !v)}
@@ -111,7 +116,7 @@ function LanguageCard({ pairs, selected, onSelect, studyHref, dictHref }: Langua
               >
                 <span className="text-text truncate">{getLanguageName(selected.source)}</span>
                 <ArrowRightIcon size={12} className="text-text-secondary shrink-0" />
-                <span className="text-text-secondary truncate">{getLanguageName(selected.target)}</span>
+                <span className="text-text-secondary truncate font-normal">{getLanguageName(selected.target)}</span>
                 {hasMultiple && (
                   <ChevronDownIcon
                     className={`w-4 h-4 text-text-muted shrink-0 transition-transform ${
@@ -125,7 +130,7 @@ function LanguageCard({ pairs, selected, onSelect, studyHref, dictHref }: Langua
                 <ul
                   role="listbox"
                   onClick={(e) => e.stopPropagation()}
-                  className="absolute left-0 top-full mt-1 z-50 bg-surface border border-border rounded-xl shadow-lg p-1.5 min-w-[250px]"
+                  className="absolute left-[-18px] top-full mt-2 z-50 bg-surface border border-border rounded-xl shadow-lg p-1.5 min-w-[300px]"
                 >
                   {pairs.map((pair) => {
                     const isActive = pairKey(pair) === pairKey(selected);
@@ -164,15 +169,17 @@ function LanguageCard({ pairs, selected, onSelect, studyHref, dictHref }: Langua
               )}
             </div>
           </div>
-          <span className="text-sm text-text-secondary shrink-0">
+          <span className="flex items-center gap-1.5 text-sm text-text-secondary shrink-0">
+            <CardsIcon className="w-5 h-5 text-border" />
             {formatWordCount(selected.total)}
           </span>
         </div>
 
         <div className="flex items-center gap-3">
           <div className="flex flex-1 items-center gap-3">
-            <Link
-              href={studyHref}
+            <button
+              type="button"
+              onClick={onStudyClick}
               className={getButtonClassName(
                 "primary",
                 "sm",
@@ -181,7 +188,7 @@ function LanguageCard({ pairs, selected, onSelect, studyHref, dictHref }: Langua
             >
               <PlayIcon className="w-5 h-5" />
               <span>{t("decks_start_training")}</span>
-            </Link>
+            </button>
             <Link
               href={dictHref}
               className={getButtonClassName(
@@ -202,9 +209,16 @@ function LanguageCard({ pairs, selected, onSelect, studyHref, dictHref }: Langua
 
 /* ───────── Главный компонент ───────── */
 export function DecksPageContent() {
+  const router = useRouter();
   const [pairs, setPairs] = useState<LanguagePair[]>([]);
   const [selectedPair, setSelectedPair] = useState<LanguagePair | null>(null);
   const [decks, setDecks] = useState<DeckData[]>([]);
+  const [allLearnedModal, setAllLearnedModal] = useState<{
+    deckId: string;
+    lang?: string;
+    targetLang?: string;
+    studyHref: string;
+  } | null>(null);
 
   function loadPairs() {
     const user = getCurrentUser();
@@ -268,6 +282,30 @@ export function DecksPageContent() {
     loadPairs();
   }
 
+  function handleStudyClick(deckId: string, studyHref: string, lang?: string, tLang?: string) {
+    const user = getCurrentUser();
+    if (!user.id) { router.push(studyHref); return; }
+    const deckCards = getCardsForDeck(user.id, deckId, lang, tLang);
+    const unlearned = deckCards.filter((c) => !c.learned);
+    if (deckCards.length > 0 && unlearned.length === 0) {
+      setAllLearnedModal({ deckId, lang, targetLang: tLang, studyHref });
+    } else {
+      router.push(studyHref);
+    }
+  }
+
+  function handleResetAndStudy() {
+    if (!allLearnedModal) return;
+    const user = getCurrentUser();
+    if (!user.id) return;
+    const { deckId, lang, targetLang, studyHref } = allLearnedModal;
+    resetDeckProgress(user.id, deckId, lang, targetLang);
+    setAllLearnedModal(null);
+    loadPairs();
+    loadDecks();
+    router.push(studyHref);
+  }
+
   /* Пустой стейт */
   if (pairs.length === 0) {
     return (
@@ -297,7 +335,14 @@ export function DecksPageContent() {
           pairs={pairs}
           selected={selectedPair}
           onSelect={setSelectedPair}
-          studyHref={`/deck/${ALL_CARDS_DECK_ID}/study?${langQueryPart}`}
+          onStudyClick={() =>
+            handleStudyClick(
+              ALL_CARDS_DECK_ID,
+              `/deck/${ALL_CARDS_DECK_ID}/study?${langQueryPart}`,
+              selectedLang,
+              selectedTargetLang,
+            )
+          }
           dictHref={`/decks/${encodeURIComponent(selectedLang)}?targetLang=${encodeURIComponent(selectedTargetLang)}`}
         />
 
@@ -314,19 +359,28 @@ export function DecksPageContent() {
                   key={deck.id}
                   className="bg-surface rounded-2xl border border-border transition-all"
                 >
-                  <div className="px-6 py-5 flex flex-col gap-4">
+                  <div className="px-6 py-5 flex flex-col gap-6">
                     <div className="flex items-center justify-between gap-4">
                       <p className="font-bold text-base text-text truncate flex-1 min-w-0">
                         {deck.name}
                       </p>
-                      <span className="text-sm text-text-secondary shrink-0">
+                      <span className="flex items-center gap-1.5 text-sm text-text-secondary shrink-0">
+                        <CardsIcon className="w-5 h-5 text-border" />
                         {formatWordCount(deck.total)}
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="flex flex-1 items-center gap-3">
-                        <Link
-                          href={`/deck/${deck.id}/study?${langQueryPart}`}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleStudyClick(
+                              deck.id,
+                              `/deck/${deck.id}/study?${langQueryPart}`,
+                              selectedLang,
+                              selectedTargetLang,
+                            )
+                          }
                           className={getButtonClassName(
                             "primary",
                             "sm",
@@ -335,7 +389,7 @@ export function DecksPageContent() {
                         >
                           <PlayIcon className="w-5 h-5" />
                           <span>{t("decks_start_training")}</span>
-                        </Link>
+                        </button>
                         <Link
                           href={`/deck/${deck.id}?${langQueryPart}`}
                           className={getButtonClassName(
@@ -366,6 +420,43 @@ export function DecksPageContent() {
           )}
         </section>
       </div>
+
+      {allLearnedModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+          <div className="bg-surface rounded-2xl shadow-lg p-6 w-full max-w-sm flex flex-col items-center gap-5 animate-card-enter">
+            <Image
+              src="/party-popper.png"
+              alt=""
+              width={80}
+              height={80}
+              unoptimized
+              style={{ mixBlendMode: "multiply" }}
+            />
+            <h2 className="text-xl font-semibold text-text text-center">
+              {t("study_all_learned_title")}
+            </h2>
+            <p className="text-sm text-text-secondary text-center leading-relaxed">
+              {t("study_all_learned_desc")}
+            </p>
+            <div className="flex flex-col gap-2.5 w-full">
+              <Button onClick={handleResetAndStudy} className="w-full justify-center">
+                {t("study_all_learned_reset")}
+              </Button>
+              <button
+                type="button"
+                onClick={() => setAllLearnedModal(null)}
+                className={getButtonClassName(
+                  "secondary",
+                  "md",
+                  "inline-flex items-center justify-center text-center w-full"
+                )}
+              >
+                {t("study_all_learned_back")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

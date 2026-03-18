@@ -98,7 +98,7 @@ export function AppHeader() {
                 key={tab.href}
                 href={tab.href}
                 className={`px-4 py-2 rounded-full no-underline transition-colors w-full h-fit text-center ${
-                  isNavActive(pathname, tab.href) ? "bg-primary-muted text-text font-semibold" : "text-text-secondary hover:text-text"
+                  isNavActive(pathname, tab.href) ? "bg-tertiary text-text font-semibold" : "text-text-secondary hover:text-text"
                 }`}
               >
                 {t(tab.labelKey)}
@@ -165,7 +165,7 @@ export function AppHeader() {
                   href={tab.href}
                   onClick={() => setMobileMenuOpen(false)}
                   className={`px-4 py-3 rounded-xl no-underline transition-colors ${
-                    isNavActive(pathname, tab.href) ? "bg-primary-muted text-text font-semibold" : "text-text hover:bg-[var(--color-border)]/30"
+                    isNavActive(pathname, tab.href) ? "bg-tertiary text-text font-semibold" : "text-text hover:bg-[var(--color-border)]/30"
                   }`}
                 >
                   {t(tab.labelKey)}

@@ -137,31 +137,29 @@ export function DeckSelectWithCreate({
               maxHeight: "min(300px, calc(100vh - 80px))",
             }}
           >
-            <ul className="overflow-auto py-1">
+            <ul className="overflow-auto p-1.5">
               {decks.map((deck) => (
                 <li
                   key={deck.id}
                   role="option"
                   aria-selected={deck.id === value}
-                  className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer text-sm transition-colors ${
+                  className={`flex items-center justify-between gap-3 px-3 py-2.5 cursor-pointer text-sm transition-colors rounded-lg ${
                     deck.id === value
                       ? "bg-primary-muted text-text font-semibold"
-                      : "text-text hover:bg-[var(--color-border)]/30"
+                      : "text-text hover:bg-background"
                   }`}
                   onClick={() => handleSelect(deck.id)}
                 >
-                  <span className="w-4 shrink-0">
-                    {deck.id === value && (
-                      <CheckIcon className="w-4 h-4 text-[var(--color-primary)]" />
-                    )}
-                  </span>
                   <span className="truncate">{deck.id === ALL_CARDS_DECK_ID ? t("decks_all_cards") : deck.name}</span>
+                  {deck.id === value && (
+                    <CheckIcon className="w-4 h-4 shrink-0 text-[var(--color-primary)]" />
+                  )}
                 </li>
               ))}
             </ul>
-            <div className="border-t border-border px-3 py-2">
+            <div className="border-t border-border p-1.5">
               {isCreating ? (
-                <div className="flex gap-2">
+                <div className="flex gap-2 px-1.5 py-1.5">
                   <input
                     ref={createInputRef}
                     type="text"
@@ -182,7 +180,7 @@ export function DeckSelectWithCreate({
                 <button
                   type="button"
                   onClick={handleStartCreate}
-                  className="w-full text-left px-4 py-2.5 text-sm text-text-secondary hover:bg-[var(--color-border)]/30 rounded-lg transition-colors"
+                  className="w-full text-left px-3 py-2.5 text-sm text-text-secondary hover:bg-background rounded-lg transition-colors"
                 >
                   {t("decks_create_new")}
                 </button>

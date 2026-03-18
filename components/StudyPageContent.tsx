@@ -54,6 +54,8 @@ export function StudyPageContent({ deckId, lang, targetLang }: StudyPageContentP
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [sessionComplete, setSessionComplete] = useState(false);
   const [progress, setProgress] = useState({ total: 0, learned: 0 });
+  const [cardAnim, setCardAnim] = useState("");
+  const animating = useRef(false);
   const touchStartX = useRef(0);
   const swipeOffsetRef = useRef(0);
 
@@ -72,6 +74,7 @@ export function StudyPageContent({ deckId, lang, targetLang }: StudyPageContentP
       setProgress(getDeckProgress(user.id, deckId, lang, targetLang));
       setCurrentIndex(0);
       setIsFlipped(false);
+      setSessionComplete(false);
     }
   }, [deckId, lang, targetLang]);
 
@@ -89,7 +92,8 @@ export function StudyPageContent({ deckId, lang, targetLang }: StudyPageContentP
   }
 
   function handleSwipe(learned: boolean) {
-    if (!currentCard) return;
+    if (!currentCard || animating.current) return;
+    animating.current = true;
 
     const user = getCurrentUser();
     if (user.id) {
@@ -103,15 +107,28 @@ export function StudyPageContent({ deckId, lang, targetLang }: StudyPageContentP
       }));
     }
 
-    if (currentIndex < cards.length - 1) {
-      setCurrentIndex((i) => i + 1);
-      setIsFlipped(false);
-      setSwipeOffset(0);
-    } else {
-      setSessionComplete(true);
-      setIsFlipped(false);
-      setSwipeOffset(0);
-    }
+    setSwipeOffset(0);
+    setCardAnim(learned ? "animate-card-exit-right" : "animate-card-exit-left");
+
+    setTimeout(() => {
+      if (currentIndex < cards.length - 1) {
+        setCurrentIndex((i) => i + 1);
+        setIsFlipped(false);
+        setSwipeOffset(0);
+        setCardAnim("animate-card-enter");
+
+        setTimeout(() => {
+          setCardAnim("");
+          animating.current = false;
+        }, 200);
+      } else {
+        setSessionComplete(true);
+        setIsFlipped(false);
+        setSwipeOffset(0);
+        setCardAnim("");
+        animating.current = false;
+      }
+    }, 220);
   }
 
   function handleTouchStart(e: React.TouchEvent) {
@@ -168,10 +185,6 @@ export function StudyPageContent({ deckId, lang, targetLang }: StudyPageContentP
   }
 
   if (sessionComplete) {
-    const studyHref = lang
-      ? `/deck/${deckId}/study?lang=${encodeURIComponent(lang)}${targetLang ? `&targetLang=${encodeURIComponent(targetLang)}` : ""}`
-      : `/deck/${deckId}/study`;
-
     return (
       <div className={`${PAGE_LAYOUT_CLASSES} items-center justify-start min-h-[60vh] gap-10`}>
         <div className="flex flex-col items-center gap-4">
@@ -192,20 +205,9 @@ export function StudyPageContent({ deckId, lang, targetLang }: StudyPageContentP
         </div>
         <div className="flex flex-col gap-3 w-full max-w-xs">
           <Link
-            href={studyHref}
-            className={getButtonClassName(
-              "primary",
-              "lg",
-              "inline-flex items-center justify-center gap-2 text-center w-full"
-            )}
-          >
-            <PlayIcon className="w-5 h-5" />
-            <span>{t("study_repeat")}</span>
-          </Link>
-          <Link
             href="/decks"
             className={getButtonClassName(
-              "secondary",
+              "primary",
               "lg",
               "inline-flex items-center justify-center text-center w-full"
             )}
@@ -266,39 +268,48 @@ export function StudyPageContent({ deckId, lang, targetLang }: StudyPageContentP
           <h1 className="font-display text-h2 font-normal text-text leading-normal flex-1 min-w-0">
             {deck.name}
           </h1>
-          <span className="text-sm text-text-secondary shrink-0">
-            {currentIndex + 1} из {cards.length}
-          </span>
+          {currentCard && (
+            <span className="text-sm text-text-secondary shrink-0">
+              {currentIndex + 1} из {cards.length}
+            </span>
+          )}
         </div>
       </header>
 
       <main className="h-fit flex flex-col items-center justify-center w-full min-h-0">
-        <StudyCard
-          foreign={currentCard.foreign}
-          translation={displayTranslation}
-          isFlipped={isFlipped}
-          onFlip={handleFlip}
-          swipeOffset={swipeOffset}
-          className="w-full"
-        />
+        {currentCard ? (
+          <>
+            <div className={`w-full ${cardAnim}`}>
+              <StudyCard
+                foreign={currentCard.foreign}
+                translation={displayTranslation}
+                isFlipped={isFlipped}
+                onFlip={handleFlip}
+                swipeOffset={cardAnim ? 0 : swipeOffset}
+                disableTransition={!!cardAnim}
+                className="w-full"
+              />
+            </div>
 
-        <div className="mt-6 flex flex-wrap gap-3 justify-center">
-          <Button variant="secondary" size="lg" onClick={() => handleSwipe(false)}>
-            ✗ Ещё раз
-          </Button>
-          <Button size="lg" onClick={() => handleSwipe(true)}>
-            ✓ Выучено
-          </Button>
-        </div>
+            <div className="mt-6 flex flex-wrap gap-3 justify-center">
+              <Button variant="secondary" size="lg" onClick={() => handleSwipe(false)}>
+                ✗ Ещё раз
+              </Button>
+              <Button size="lg" onClick={() => handleSwipe(true)}>
+                ✓ Выучено
+              </Button>
+            </div>
 
-        <div className="mt-4">
-          <SpeakButton
-            text={currentCard.foreign}
-            lang={currentCard.foreignLanguage ?? "en"}
-          />
-        </div>
-
+            <div className="mt-4">
+              <SpeakButton
+                text={currentCard.foreign}
+                lang={currentCard.foreignLanguage ?? "en"}
+              />
+            </div>
+          </>
+        ) : null}
       </main>
+
     </div>
   );
 }

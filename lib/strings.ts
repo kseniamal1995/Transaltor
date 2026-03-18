@@ -119,6 +119,10 @@ const translations: Record<Locale, Record<string, string>> = {
     study_round_complete_desc: "Вы отлично поработали — так держать!",
     study_repeat: "Повторить",
     study_back_to_decks: "Вернуться к словарям",
+    study_all_learned_title: "Все слова выучены!",
+    study_all_learned_desc: "Вы выучили все слова в этом словаре. Хотите сбросить прогресс и пройти заново?",
+    study_all_learned_reset: "Да, начать заново",
+    study_all_learned_back: "Вернуться к словарям",
 
     // Язык (селектор)
     lang_label: "Язык",
@@ -235,6 +239,10 @@ const translations: Record<Locale, Record<string, string>> = {
     study_round_complete_desc: "Great job — keep it up!",
     study_repeat: "Repeat",
     study_back_to_decks: "Back to dictionaries",
+    study_all_learned_title: "All words learned!",
+    study_all_learned_desc: "You've learned all the words in this dictionary. Want to reset progress and start over?",
+    study_all_learned_reset: "Yes, start over",
+    study_all_learned_back: "Back to dictionaries",
     lang_label: "Language",
     deck_delete_pair_confirm: "Delete all \"{source} → {target}\" cards? This cannot be undone.",
     deck_delete_lang_aria: "Delete dictionary",

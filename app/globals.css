@@ -28,3 +28,26 @@
 .animate-slide-in-right {
   animation: slide-in-right 0.25s ease-out;
 }
+
+@keyframes card-exit-right {
+  from { opacity: 1; transform: translateX(0) scale(1); }
+  to   { opacity: 0; transform: translateX(40%) scale(0.95); }
+}
+@keyframes card-exit-left {
+  from { opacity: 1; transform: translateX(0) scale(1); }
+  to   { opacity: 0; transform: translateX(-40%) scale(0.95); }
+}
+@keyframes card-enter {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.animate-card-exit-right {
+  animation: card-exit-right 0.22s ease-in forwards;
+}
+.animate-card-exit-left {
+  animation: card-exit-left 0.22s ease-in forwards;
+}
+.animate-card-enter {
+  animation: card-enter 0.2s ease-out;
+}
