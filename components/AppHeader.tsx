@@ -101,8 +101,7 @@ export function AppHeader() {
       <header className="flex items-center justify-between gap-3 pl-8 pr-6 pt-4 pb-4 md:px-8 md:pt-4 md:pb-[52px]">
         {/* Слева: серый кружок (лого) 32px на мобилке, лого на десктопе */}
         <div className="flex items-center shrink-0 md:w-[90px]">
-          <div className="md:hidden w-8 h-8 rounded-full bg-[var(--color-border)] shrink-0" aria-hidden />
-          <img src="/logo.svg" alt="" className="hidden md:block h-10 shrink-0" aria-hidden="true" draggable={false} />
+          <img src="/logo.svg" alt="" className="h-8 md:h-10 shrink-0" aria-hidden="true" draggable={false} />
         </div>
 
         {/* Навигация — только на десктопе */}
@@ -188,7 +187,7 @@ export function AppHeader() {
           {/* Панель меню — верхняя половина экрана */}
           <div className="absolute top-0 left-0 right-0 bg-surface border-b border-border rounded-b-2xl shadow-lg max-h-[50vh] overflow-auto">
             <div className="flex items-center justify-between gap-3 p-4 border-b border-border">
-              <span className="text-sm font-medium text-text-secondary">{t("nav_close")}</span>
+              <img src="/logo.svg" alt="" className="h-8 shrink-0" aria-hidden="true" draggable={false} />
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(false)}
@@ -213,14 +212,15 @@ export function AppHeader() {
                 </Link>
               ))}
 
-              <button
-                type="button"
-                onClick={handleLogoutClick}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-text-secondary hover:text-text hover:bg-[var(--color-border)]/30 transition-colors text-left mt-2"
-              >
-                <UserIcon className="w-5 h-5 shrink-0" />
-                {t("nav_logout")}
-              </button>
+              <div className="border-t border-border mt-2 pt-2">
+                <button
+                  type="button"
+                  onClick={handleLogoutClick}
+                  className="w-full px-4 py-3 rounded-xl text-text-secondary hover:text-text hover:bg-[var(--color-border)]/30 transition-colors text-left"
+                >
+                  {t("nav_logout")}
+                </button>
+              </div>
             </nav>
           </div>
         </div>

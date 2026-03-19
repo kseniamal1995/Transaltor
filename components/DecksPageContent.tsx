@@ -102,7 +102,8 @@ function LanguageCard({ pairs, selected, onSelect, onStudyClick, dictHref }: Lan
 
   return (
     <div ref={ref} className="bg-surface rounded-2xl border border-border transition-all">
-      <div className="px-6 py-5 flex flex-col gap-6">
+      <div className="px-6 py-5 flex flex-col gap-5 md:gap-6">
+        {/* Заголовок: флаг + язык */}
         <div className="flex items-center justify-between gap-4">
           <div className="flex-1 min-w-0 flex items-center gap-3 relative">
             <FlagIcon code={selected.source} size={24} />
@@ -115,8 +116,8 @@ function LanguageCard({ pairs, selected, onSelect, onStudyClick, dictHref }: Lan
                 aria-haspopup={hasMultiple ? "listbox" : undefined}
               >
                 <span className="text-text truncate">{getLanguageName(selected.source)}</span>
-                <ArrowRightIcon size={12} className="text-text-secondary shrink-0" />
-                <span className="text-text-secondary truncate font-normal">{getLanguageName(selected.target)}</span>
+                <ArrowRightIcon size={12} className="text-text-secondary shrink-0 hidden md:inline" />
+                <span className="text-text-secondary truncate font-normal hidden md:inline">{getLanguageName(selected.target)}</span>
                 {hasMultiple && (
                   <ChevronDownIcon
                     className={`w-4 h-4 text-text-muted shrink-0 transition-transform ${
@@ -169,21 +170,32 @@ function LanguageCard({ pairs, selected, onSelect, onStudyClick, dictHref }: Lan
               )}
             </div>
           </div>
-          <span className="flex items-center gap-1.5 text-sm text-text-secondary shrink-0">
+          {/* Кол-во слов: на мобилке скрыто (переносится в отдельную строку) */}
+          <span className="hidden md:flex items-center gap-1.5 text-sm text-text-secondary shrink-0">
             <CardsIcon className="w-5 h-5 text-border" />
             {formatWordCount(selected.total)}
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex flex-1 items-center gap-3">
+        {/* Мобилка: кол-во слов + прогресс-кольцо в одну строку */}
+        <div className="flex md:hidden items-center justify-between">
+          <span className="flex items-center gap-1.5 text-sm text-text-secondary">
+            <CardsIcon className="w-5 h-5 text-border" />
+            {formatWordCount(selected.total)}
+          </span>
+          <DeckProgressBar learned={selected.learned} total={selected.total} size="sm" />
+        </div>
+
+        {/* Кнопки */}
+        <div className="flex flex-col md:flex-row items-center gap-3">
+          <div className="flex flex-col md:flex-row md:flex-1 items-center gap-3 w-full md:w-auto">
             <button
               type="button"
               onClick={onStudyClick}
               className={getButtonClassName(
                 "primary",
                 "sm",
-                "inline-flex items-center justify-center gap-2 text-center"
+                "inline-flex items-center justify-center gap-2 text-center w-full md:w-auto"
               )}
             >
               <PlayIcon className="w-5 h-5" />
@@ -191,16 +203,14 @@ function LanguageCard({ pairs, selected, onSelect, onStudyClick, dictHref }: Lan
             </button>
             <Link
               href={dictHref}
-              className={getButtonClassName(
-                "secondary",
-                "sm",
-                "inline-flex items-center justify-center text-sm"
-              )}
+              className="inline-flex items-center justify-center text-sm font-semibold text-text hover:text-text-secondary transition-colors md:px-4 md:py-2 md:rounded-full md:border md:border-border"
             >
               {t("decks_open_dictionary")}
             </Link>
           </div>
-          <DeckProgressBar learned={selected.learned} total={selected.total} size="sm" />
+          <div className="hidden md:block">
+            <DeckProgressBar learned={selected.learned} total={selected.total} size="sm" />
+          </div>
         </div>
       </div>
     </div>

@@ -32,7 +32,7 @@ export default function RootLayout({
           <ClerkUserSync>
             <ToastProvider>
               <AppHeader />
-              <main className="min-h-screen">{children}</main>
+              <main className="min-h-screen pb-12">{children}</main>
             </ToastProvider>
           </ClerkUserSync>
         </body>
