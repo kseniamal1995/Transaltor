@@ -13,8 +13,8 @@ const manrope = Manrope({ subsets: ["latin", "cyrillic"], variable: "--font-manr
 const zenAntique = Zen_Antique({ subsets: ["latin"], weight: "400", variable: "--font-zen-antique" });
 
 export const metadata: Metadata = {
-  title: "Карточки для изучения слов",
-  description: "PWA для изучения иностранных слов с карточками",
+  title: "Lexio — твой личный словарь",
+  description: "Переводи и запоминай иностранные слова с помощью карточек",
 };
 
 export const viewport = {
