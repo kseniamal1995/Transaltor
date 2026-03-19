@@ -55,7 +55,7 @@ export function StudyCard({
                 {translation}
               </p>
               <p className="mt-3 text-sm text-text-muted">
-                {t("study_swipe_hint")}
+                {foreign}
               </p>
             </>
           )}
