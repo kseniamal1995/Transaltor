@@ -203,7 +203,11 @@ function LanguageCard({ pairs, selected, onSelect, onStudyClick, dictHref }: Lan
             </button>
             <Link
               href={dictHref}
-              className="inline-flex items-center justify-center text-sm font-semibold text-text hover:text-text-secondary transition-colors md:px-4 md:py-2 md:rounded-full md:border md:border-border"
+              className={getButtonClassName(
+                "secondary",
+                "sm",
+                "inline-flex items-center justify-center text-sm w-full md:w-auto"
+              )}
             >
               {t("decks_open_dictionary")}
             </Link>
@@ -320,11 +324,21 @@ export function DecksPageContent() {
   if (pairs.length === 0) {
     return (
       <div className={`${PAGE_LAYOUT_CLASSES} gap-10`}>
-        <div className="w-full flex flex-col p-0">
-          <div className="flex flex-col items-center gap-4 p-8 border border-border rounded-2xl text-center">
-            <EmptyStateIllustration className="w-[68px] h-[68px] text-text-muted" />
-            <p className="text-base text-text-secondary">{t("decks_empty")}</p>
-          </div>
+        <div className="w-full flex flex-col gap-8 p-0">
+          <section>
+            <h2 className="font-display text-[22px] font-normal text-text mb-4">
+              {t("decks_tab_my")}
+            </h2>
+            <div className="flex flex-col items-center gap-6 p-8 rounded-2xl border border-border text-center">
+              <EmptyStateIllustration className="w-[68px] h-[68px] text-text-muted" />
+              <p className="text-base text-text-secondary leading-6 whitespace-pre-line">
+                {t("decks_no_custom_decks")}
+              </p>
+              <Link href="/" className={getButtonClassName("primary", "sm", "inline-flex items-center justify-center gap-2 text-center")}>
+                {t("decks_go_to_translator")}
+              </Link>
+            </div>
+          </section>
         </div>
       </div>
     );

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Manrope, Zen_Antique } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ruRU } from "@clerk/localizations";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import { ClerkUserSync } from "@/components/ClerkUserSync";
 import { AppHeader } from "@/components/AppHeader";
@@ -35,6 +37,8 @@ export default function RootLayout({
               <main className="min-h-screen pb-12">{children}</main>
             </ToastProvider>
           </ClerkUserSync>
+          <Analytics />
+          <SpeedInsights />
         </body>
       </html>
     </ClerkProvider>
