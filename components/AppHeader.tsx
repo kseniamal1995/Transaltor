@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useClerk, useUser } from "@clerk/nextjs";
@@ -70,6 +70,19 @@ export function AppHeader() {
   const { signOut } = useClerk();
   const { user } = useUser();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!userMenuOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [userMenuOpen]);
   const isAuthPage = pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up");
 
   if (isAuthPage) return null;
@@ -120,21 +133,37 @@ export function AppHeader() {
           >
             <BurgerIcon className="w-6 h-6" />
           </button>
-          <div className="hidden md:flex items-center shrink-0">
+          <div className="hidden md:flex items-center shrink-0 relative" ref={userMenuRef}>
             {user?.imageUrl ? (
               <img
                 src={user.imageUrl}
                 alt=""
                 className="w-10 h-10 rounded-full shrink-0 cursor-pointer"
-                onClick={handleLogoutClick}
+                onClick={() => setUserMenuOpen((v) => !v)}
               />
             ) : (
               <div
                 className="flex items-center justify-center w-10 h-10 rounded-full bg-[var(--color-border)] text-text-muted shrink-0 cursor-pointer"
-                aria-label={t("nav_sign_in")}
-                onClick={handleLogoutClick}
+                onClick={() => setUserMenuOpen((v) => !v)}
               >
                 <UserIcon className="w-6 h-6" />
+              </div>
+            )}
+            {userMenuOpen && (
+              <div className="absolute right-0 top-12 w-56 bg-surface border border-border rounded-xl shadow-lg py-1.5 z-50">
+                {user && (
+                  <div className="px-4 py-2.5 border-b border-border">
+                    <p className="text-sm font-medium text-text truncate">{user.fullName || user.firstName}</p>
+                    <p className="text-xs text-text-secondary truncate">{user.primaryEmailAddress?.emailAddress}</p>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => { setUserMenuOpen(false); handleLogoutClick(); }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-text-secondary hover:bg-surface-secondary hover:text-text transition-colors"
+                >
+                  {t("nav_logout")}
+                </button>
               </div>
             )}
           </div>
