@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useClerk, useUser } from "@clerk/nextjs";
 import { t } from "@/lib/strings";
 import { STORAGE_KEYS } from "@/lib/constants";
 import { NAV_TABS, isNavActive } from "@/lib/nav";
@@ -66,6 +67,8 @@ function UserIcon({ className }: { className?: string }) {
 export function AppHeader() {
   const pathname = usePathname();
   const router = useRouter();
+  const { signOut } = useClerk();
+  const { user } = useUser();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const isAuthPage = pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up");
 
@@ -77,8 +80,7 @@ export function AppHeader() {
       localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
       localStorage.removeItem(STORAGE_KEYS.GUEST_USER_ID);
     }
-    router.push("/translate");
-    router.refresh();
+    signOut({ redirectUrl: "/sign-in" });
   }
 
   return (
@@ -119,12 +121,22 @@ export function AppHeader() {
             <BurgerIcon className="w-6 h-6" />
           </button>
           <div className="hidden md:flex items-center shrink-0">
-            <div
-              className="flex items-center justify-center w-10 h-10 rounded-full bg-[var(--color-border)] text-text-muted shrink-0"
-              aria-label={t("nav_sign_in")}
-            >
-              <UserIcon className="w-6 h-6" />
-            </div>
+            {user?.imageUrl ? (
+              <img
+                src={user.imageUrl}
+                alt=""
+                className="w-10 h-10 rounded-full shrink-0 cursor-pointer"
+                onClick={handleLogoutClick}
+              />
+            ) : (
+              <div
+                className="flex items-center justify-center w-10 h-10 rounded-full bg-[var(--color-border)] text-text-muted shrink-0 cursor-pointer"
+                aria-label={t("nav_sign_in")}
+                onClick={handleLogoutClick}
+              >
+                <UserIcon className="w-6 h-6" />
+              </div>
+            )}
           </div>
         </div>
       </header>

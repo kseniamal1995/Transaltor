@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Manrope, Zen_Antique } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
+import { ruRU } from "@clerk/localizations";
 import "./globals.css";
-import { GuestUserSync } from "@/components/GuestUserSync";
+import { ClerkUserSync } from "@/components/ClerkUserSync";
 import { AppHeader } from "@/components/AppHeader";
 import { ToastProvider } from "@/components/Toast";
 
@@ -24,15 +26,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" className={`h-full ${manrope.variable} ${zenAntique.variable}`}>
-      <body className="min-h-screen h-full bg-[var(--color-background)] text-[var(--color-text)] antialiased font-sans">
-        <GuestUserSync>
-          <ToastProvider>
-            <AppHeader />
-            <main className="min-h-screen">{children}</main>
-          </ToastProvider>
-        </GuestUserSync>
-      </body>
-    </html>
+    <ClerkProvider localization={ruRU}>
+      <html lang="ru" className={`h-full ${manrope.variable} ${zenAntique.variable}`}>
+        <body className="min-h-screen h-full bg-[var(--color-background)] text-[var(--color-text)] antialiased font-sans">
+          <ClerkUserSync>
+            <ToastProvider>
+              <AppHeader />
+              <main className="min-h-screen">{children}</main>
+            </ToastProvider>
+          </ClerkUserSync>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
