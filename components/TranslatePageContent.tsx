@@ -26,6 +26,17 @@ import { useToast } from "./Toast";
 
 const MIN_CHARS_TO_TRANSLATE = 2;
 
+function getStoredLastSourceLang(): string {
+  if (typeof window === "undefined") return "en";
+  const stored = localStorage.getItem(STORAGE_KEYS.LAST_SOURCE_LANG);
+  return stored || "en";
+}
+
+function setStoredLastSourceLang(lang: string) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(STORAGE_KEYS.LAST_SOURCE_LANG, lang);
+}
+
 function getStoredLastTargetLang(): string {
   if (typeof window === "undefined") return "ru";
   const stored = localStorage.getItem(STORAGE_KEYS.LAST_TARGET_LANG);
@@ -45,7 +56,7 @@ function getLangPair(sourceLang: string, targetLang: string): string {
 
 export function TranslatePageContent() {
   const [inputValue, setInputValue] = useState("");
-  const [sourceLang, setSourceLang] = useState("en");
+  const [sourceLang, setSourceLangRaw] = useState("en");
   const [targetLang, setTargetLang] = useState("ru");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,12 +66,18 @@ export function TranslatePageContent() {
   const [decks, setDecks] = useState<{ id: string; name: string; createdAt: string }[]>([]);
   const [selectedDeckId, setSelectedDeckId] = useState("");
   const [customTranslation, setCustomTranslation] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
   const { showToast } = useToast();
 
+  function setSourceLang(lang: string) {
+    setSourceLangRaw(lang);
+    setStoredLastSourceLang(lang);
+  }
+
   useEffect(() => {
-    const stored = getStoredLastTargetLang();
-    if (stored !== "ru") setTargetLang(stored);
+    const storedSource = getStoredLastSourceLang();
+    if (storedSource !== "en") setSourceLangRaw(storedSource);
+    const storedTarget = getStoredLastTargetLang();
+    if (storedTarget !== "ru") setTargetLang(storedTarget);
   }, []);
 
   useEffect(() => {
@@ -201,7 +218,6 @@ export function TranslatePageContent() {
 
     const deckName = decks.find((d) => d.id === selectedDeckId)?.name ?? "";
 
-    setIsSaving(true);
     try {
       const duplicate = await isCardDuplicate(sourceText, selectedDeckId);
       if (duplicate) {
@@ -221,8 +237,6 @@ export function TranslatePageContent() {
       setCustomTranslation("");
     } catch {
       showToast(t("translate_error"), "error");
-    } finally {
-      setIsSaving(false);
     }
   }
 
@@ -282,7 +296,6 @@ export function TranslatePageContent() {
               onCreateDeck={(name) => createDeck(name)}
               onDeckCreated={(deck) => setDecks((prev) => [...prev, deck])}
               onSave={handleSaveCard}
-              isSaving={isSaving}
             />
           </>
         )}

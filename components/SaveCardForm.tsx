@@ -12,8 +12,6 @@ interface SaveCardFormProps {
   onDeckCreated?: (deck: Deck) => void;
   onCreateDeck: (name: string) => Deck | Promise<Deck>;
   onSave: () => void;
-  onCancel?: () => void;
-  isSaving?: boolean;
 }
 
 export function SaveCardForm({
@@ -23,7 +21,6 @@ export function SaveCardForm({
   onDeckCreated,
   onCreateDeck,
   onSave,
-  isSaving = false,
 }: SaveCardFormProps) {
   return (
     <section
@@ -41,8 +38,8 @@ export function SaveCardForm({
           onDeckCreated={onDeckCreated}
         />
 
-        <Button onClick={onSave} disabled={isSaving} className="shrink-0 font-bold">
-          {isSaving ? t("card_saving") : t("card_save")}
+        <Button onClick={onSave} className="shrink-0 font-bold">
+          {t("card_save")}
         </Button>
       </div>
     </section>
