@@ -1,83 +1,86 @@
 "use client";
 
-import type { Card, Deck, TranslationHistoryItem, User } from "@/types";
+import type { Card, Deck, TranslationHistoryItem } from "@/types";
 import { normalizeLanguageCode } from "@/lib/languages";
-import { ALL_CARDS_DECK_ID, STORAGE_KEYS } from "./constants";
+import { ALL_CARDS_DECK_ID } from "./constants";
 import { t } from "@/lib/strings";
 
-function generateId(): string {
-  return crypto.randomUUID();
-}
+// ─── API helpers ─────────────────────────────────────
 
-function getStorageKey(userId: string, type: "decks" | "history" | "cards") {
-  switch (type) {
-    case "decks":
-      return STORAGE_KEYS.decks(userId);
-    case "history":
-      return STORAGE_KEYS.history(userId);
-    case "cards":
-      return STORAGE_KEYS.cards(userId);
-    default:
-      throw new Error(`Unknown storage type: ${type}`);
+async function api<T>(url: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, init);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || `API error ${res.status}`);
   }
+  return res.json();
 }
 
-export function getCurrentUser(): User {
-  if (typeof window === "undefined") {
-    return { id: "" };
-  }
+// ─── Types from API → client types mapping ───────────
 
-  const stored = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
-  if (stored) {
-    try {
-      const user = JSON.parse(stored) as User;
-      if (user.id) return user;
-    } catch {
-      // invalid JSON
-    }
-  }
-
-  return { id: "" };
+interface ApiCard {
+  id: string;
+  foreign_word: string;
+  translation: string;
+  custom_translation: string | null;
+  foreign_language: string | null;
+  translation_language: string | null;
+  learned: boolean;
+  created_at: string;
+  deck_ids: string[];
 }
 
-function ensureDefaultDeck(userId: string): void {
-  const decks = getDecks(userId);
-  const hasAllCards = decks.some((d) => d.id === ALL_CARDS_DECK_ID);
-  if (!hasAllCards) {
-    const defaultDeck: Deck = {
-      id: ALL_CARDS_DECK_ID,
-      name: "All cards",
-      createdAt: new Date().toISOString(),
-    };
-    saveDecks(userId, [...decks, defaultDeck]);
-  }
+interface ApiDeck {
+  id: string;
+  name: string;
+  created_at: string;
 }
 
-function getDecks(userId: string): Deck[] {
-  if (typeof window === "undefined") return [];
-  const key = getStorageKey(userId, "decks");
-  const raw = localStorage.getItem(key);
-  if (!raw) return [];
-  try {
-    return JSON.parse(raw) as Deck[];
-  } catch {
-    return [];
-  }
+interface ApiHistoryItem {
+  id: string;
+  foreign_word: string;
+  translation: string;
+  custom_translation: string | null;
+  foreign_language: string | null;
+  translation_language: string | null;
+  created_at: string;
 }
 
-function saveDecks(userId: string, decks: Deck[]): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(getStorageKey(userId, "decks"), JSON.stringify(decks));
+function toCard(a: ApiCard): Card {
+  return {
+    id: a.id,
+    foreign: a.foreign_word,
+    translation: a.translation,
+    customTranslation: a.custom_translation ?? undefined,
+    foreignLanguage: a.foreign_language ?? undefined,
+    translationLanguage: a.translation_language ?? undefined,
+    learned: a.learned,
+    createdAt: a.created_at,
+    deckIds: a.deck_ids,
+  };
 }
 
-export function getDecksForUser(userId: string): Deck[] {
-  const decks = getDecks(userId);
-  if (decks.length === 0) {
-    ensureDefaultDeck(userId);
-    return getDecks(userId).map(localizeAllCardsDeck);
-  }
-  return decks.map(localizeAllCardsDeck);
+function toDeck(a: ApiDeck): Deck {
+  return {
+    id: a.id,
+    name: a.name,
+    createdAt: a.created_at,
+  };
 }
+
+function toHistoryItem(a: ApiHistoryItem): TranslationHistoryItem {
+  return {
+    id: a.id,
+    foreign: a.foreign_word,
+    translation: a.translation,
+    customTranslation: a.custom_translation ?? undefined,
+    foreignLanguage: a.foreign_language ?? undefined,
+    translationLanguage: a.translation_language ?? undefined,
+    createdAt: a.created_at,
+  };
+}
+
+// ─── Decks ───────────────────────────────────────────
 
 function localizeAllCardsDeck(deck: Deck): Deck {
   if (deck.id === ALL_CARDS_DECK_ID) {
@@ -86,85 +89,51 @@ function localizeAllCardsDeck(deck: Deck): Deck {
   return deck;
 }
 
-export function createDeck(userId: string, name: string): Deck {
-  const decks = getDecksForUser(userId);
-  const deck: Deck = {
-    id: generateId(),
-    name,
-    createdAt: new Date().toISOString(),
+export async function getDecksForUser(): Promise<Deck[]> {
+  const raw = await api<ApiDeck[]>("/api/decks");
+  const decks = raw.map(toDeck).map(localizeAllCardsDeck);
+  const allCardsDeck: Deck = {
+    id: ALL_CARDS_DECK_ID,
+    name: t("decks_all_cards"),
+    createdAt: "",
   };
-  saveDecks(userId, [...decks, deck]);
-  return deck;
+  return [allCardsDeck, ...decks.filter((d) => d.id !== ALL_CARDS_DECK_ID)];
 }
 
-export function getHistory(userId: string): TranslationHistoryItem[] {
-  if (typeof window === "undefined") return [];
-  const raw = localStorage.getItem(getStorageKey(userId, "history"));
-  if (!raw) return [];
-  try {
-    const items = JSON.parse(raw) as TranslationHistoryItem[];
-    return items.sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-  } catch {
-    return [];
-  }
+export async function createDeck(name: string): Promise<Deck> {
+  const raw = await api<ApiDeck>("/api/decks", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+  return toDeck(raw);
 }
 
-export function addToHistory(
-  userId: string,
-  item: Omit<TranslationHistoryItem, "id" | "createdAt">
-): TranslationHistoryItem {
-  const history = getHistory(userId);
-  const newItem: TranslationHistoryItem = {
-    ...item,
-    id: generateId(),
-    createdAt: new Date().toISOString(),
-  };
-  const updated = [newItem, ...history];
-  localStorage.setItem(
-    getStorageKey(userId, "history"),
-    JSON.stringify(updated)
-  );
-  return newItem;
+export async function renameDeck(deckId: string, name: string): Promise<void> {
+  await api("/api/decks", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: deckId, name }),
+  });
 }
 
-export function removeFromHistory(userId: string, itemId: string): void {
-  const history = getHistory(userId);
-  const updated = history.filter((h) => h.id !== itemId);
-  localStorage.setItem(
-    getStorageKey(userId, "history"),
-    JSON.stringify(updated)
-  );
+export async function deleteDeck(deckId: string): Promise<void> {
+  await api(`/api/decks?id=${encodeURIComponent(deckId)}`, { method: "DELETE" });
 }
 
-export function clearHistory(userId: string): void {
-  localStorage.setItem(getStorageKey(userId, "history"), JSON.stringify([]));
+// ─── Cards ───────────────────────────────────────────
+
+export async function getCards(): Promise<Card[]> {
+  const raw = await api<ApiCard[]>("/api/cards");
+  return raw.map(toCard);
 }
 
-export function getCards(userId: string): Card[] {
-  if (typeof window === "undefined") return [];
-  const raw = localStorage.getItem(getStorageKey(userId, "cards"));
-  if (!raw) return [];
-  try {
-    const cards = JSON.parse(raw) as Card[];
-    return cards.sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-  } catch {
-    return [];
-  }
-}
-
-export function getCardsForDeck(
-  userId: string,
+export async function getCardsForDeck(
   deckId: string,
   languageFilter?: string,
   translationLanguageFilter?: string,
-): Card[] {
-  const cards = getCards(userId);
+): Promise<Card[]> {
+  const cards = await getCards();
   let filtered =
     deckId === ALL_CARDS_DECK_ID
       ? cards
@@ -172,41 +141,25 @@ export function getCardsForDeck(
 
   if (languageFilter) {
     filtered = filtered.filter(
-      (c) =>
-        normalizeLanguageCode(c.foreignLanguage ?? "en") === languageFilter
+      (c) => normalizeLanguageCode(c.foreignLanguage ?? "en") === languageFilter,
     );
   }
   if (translationLanguageFilter) {
     filtered = filtered.filter(
-      (c) =>
-        normalizeLanguageCode(c.translationLanguage ?? "ru") === translationLanguageFilter
+      (c) => normalizeLanguageCode(c.translationLanguage ?? "ru") === translationLanguageFilter,
     );
   }
   return filtered;
 }
 
-export function getDeckProgress(
-  userId: string,
+export async function getDeckProgress(
   deckId: string,
   languageFilter?: string,
   translationLanguageFilter?: string,
-): { total: number; learned: number } {
-  const cards = getCardsForDeck(userId, deckId, languageFilter, translationLanguageFilter);
+): Promise<{ total: number; learned: number }> {
+  const cards = await getCardsForDeck(deckId, languageFilter, translationLanguageFilter);
   const learned = cards.filter((c) => c.learned).length;
   return { total: cards.length, learned };
-}
-
-export function getLanguagesInUse(userId: string): string[] {
-  const cards = getCards(userId);
-  const langs = new Set<string>();
-  cards.forEach((c) => {
-    const raw = c.foreignLanguage ?? "en";
-    const lang = normalizeLanguageCode(raw);
-    if (lang !== "auto") {
-      langs.add(lang);
-    }
-  });
-  return Array.from(langs).sort();
 }
 
 export interface LanguagePair {
@@ -216,8 +169,8 @@ export interface LanguagePair {
   learned: number;
 }
 
-export function getLanguagePairsInUse(userId: string): LanguagePair[] {
-  const cards = getCards(userId);
+export async function getLanguagePairsInUse(): Promise<LanguagePair[]> {
+  const cards = await getCards();
   const pairMap = new Map<string, { total: number; learned: number }>();
 
   cards.forEach((c) => {
@@ -245,29 +198,19 @@ export function getLanguagePairsInUse(userId: string): LanguagePair[] {
   return pairs;
 }
 
-export function deleteLanguagePair(userId: string, source: string, target: string): void {
-  const cards = getCards(userId);
-  const normalizedSrc = normalizeLanguageCode(source);
-  const normalizedTgt = normalizeLanguageCode(target);
-  const updated = cards.filter(
-    (c) =>
-      normalizeLanguageCode(c.foreignLanguage ?? "en") !== normalizedSrc ||
-      normalizeLanguageCode(c.translationLanguage ?? "ru") !== normalizedTgt
-  );
-  localStorage.setItem(getStorageKey(userId, "cards"), JSON.stringify(updated));
-}
-
-/** Returns decks that have at least one card in the given language. Always includes ALL_CARDS_DECK_ID. */
-export function getDecksForLanguage(
-  userId: string,
-  lang: string
-): { id: string; name: string; createdAt: string }[] {
-  const allDecks = getDecksForUser(userId);
-  const cards = getCards(userId);
+export async function getDecksForLanguage(
+  lang: string,
+): Promise<{ id: string; name: string; createdAt: string }[]> {
+  const allDecks = await getDecksForUser();
+  const cards = await getCards();
   const normalizedLang = normalizeLanguageCode(lang);
 
+  const deckIdsWithCards = new Set<string>();
   const deckIdsWithCardsInLang = new Set<string>();
   cards.forEach((c) => {
+    if (c.deckIds.length > 0) {
+      c.deckIds.forEach((did) => deckIdsWithCards.add(did));
+    }
     if (normalizeLanguageCode(c.foreignLanguage ?? "en") === normalizedLang) {
       if (c.deckIds.length > 0) {
         c.deckIds.forEach((did) => deckIdsWithCardsInLang.add(did));
@@ -280,120 +223,117 @@ export function getDecksForLanguage(
   const result: { id: string; name: string; createdAt: string }[] = [];
   result.push({
     id: ALL_CARDS_DECK_ID,
-    name: "Все слова",
+    name: t("decks_all_cards"),
     createdAt: "",
   });
 
   allDecks
-    .filter((d) => d.id !== ALL_CARDS_DECK_ID && deckIdsWithCardsInLang.has(d.id))
+    .filter((d) => d.id !== ALL_CARDS_DECK_ID && (deckIdsWithCardsInLang.has(d.id) || !deckIdsWithCards.has(d.id)))
     .forEach((d) => result.push(d));
 
   return result;
 }
 
-export function isCardDuplicate(userId: string, foreign: string, deckId: string): boolean {
-  const cards = getCards(userId);
-  const normalizedForeign = foreign.trim().toLowerCase();
-  return cards.some(
-    (c) => c.foreign.trim().toLowerCase() === normalizedForeign && c.deckIds.includes(deckId),
+export async function isCardDuplicate(
+  foreign: string,
+  deckId: string,
+): Promise<boolean> {
+  const { isDuplicate } = await api<{ isDuplicate: boolean }>(
+    `/api/cards/duplicate?foreignWord=${encodeURIComponent(foreign)}&deckId=${encodeURIComponent(deckId)}`,
   );
+  return isDuplicate;
 }
 
-export function saveCard(
-  userId: string,
-  card: Omit<Card, "id" | "createdAt" | "learned">
-): Card {
-  const cards = getCards(userId);
+export async function saveCard(
+  card: Omit<Card, "id" | "createdAt" | "learned">,
+): Promise<Card> {
   const foreignLang = card.foreignLanguage
     ? normalizeLanguageCode(card.foreignLanguage)
     : undefined;
-  const langToSave =
-    foreignLang && foreignLang !== "auto" ? foreignLang : undefined;
+  const langToSave = foreignLang && foreignLang !== "auto" ? foreignLang : undefined;
   const targetLang = card.translationLanguage
     ? normalizeLanguageCode(card.translationLanguage)
     : undefined;
-  const targetToSave =
-    targetLang && targetLang !== "auto" ? targetLang : undefined;
-  const newCard: Card = {
-    ...card,
-    foreignLanguage: langToSave ?? card.foreignLanguage,
-    translationLanguage: targetToSave ?? card.translationLanguage,
-    id: generateId(),
-    learned: false,
-    createdAt: new Date().toISOString(),
-  };
-  const updated = [...cards, newCard];
-  localStorage.setItem(getStorageKey(userId, "cards"), JSON.stringify(updated));
-  return newCard;
+  const targetToSave = targetLang && targetLang !== "auto" ? targetLang : undefined;
+
+  const raw = await api<ApiCard>("/api/cards", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      foreign_word: card.foreign,
+      translation: card.translation,
+      custom_translation: card.customTranslation || undefined,
+      foreign_language: langToSave ?? card.foreignLanguage,
+      translation_language: targetToSave ?? card.translationLanguage,
+      deck_ids: card.deckIds,
+    }),
+  });
+  return toCard(raw);
 }
 
-export function updateCard(userId: string, card: Card): void {
-  const cards = getCards(userId);
-  const index = cards.findIndex((c) => c.id === card.id);
-  if (index === -1) return;
-  const updated = [...cards];
-  updated[index] = card;
-  localStorage.setItem(getStorageKey(userId, "cards"), JSON.stringify(updated));
+export async function setCardLearned(cardId: string, learned: boolean): Promise<void> {
+  await api("/api/cards", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: cardId, learned }),
+  });
 }
 
-export function setCardLearned(userId: string, cardId: string, learned: boolean): void {
-  const cards = getCards(userId);
-  const card = cards.find((c) => c.id === cardId);
-  if (!card) return;
-  updateCard(userId, { ...card, learned });
+export async function deleteCard(cardId: string): Promise<void> {
+  await api(`/api/cards?id=${encodeURIComponent(cardId)}`, { method: "DELETE" });
 }
 
-export function resetDeckProgress(
-  userId: string,
+export async function deleteLanguagePair(source: string, target: string): Promise<void> {
+  await api(
+    `/api/cards?lang=${encodeURIComponent(source)}&targetLang=${encodeURIComponent(target)}`,
+    { method: "DELETE" },
+  );
+}
+
+export async function deleteLanguage(lang: string): Promise<void> {
+  await api(`/api/cards?lang=${encodeURIComponent(lang)}`, { method: "DELETE" });
+}
+
+export async function resetDeckProgress(
   deckId: string,
-  languageFilter?: string,
-  translationLanguageFilter?: string,
-): void {
-  const allCards = getCards(userId);
-  const deckCardIds = new Set(
-    getCardsForDeck(userId, deckId, languageFilter, translationLanguageFilter).map((c) => c.id),
-  );
-  const updated = allCards.map((c) =>
-    deckCardIds.has(c.id) ? { ...c, learned: false } : c,
-  );
-  localStorage.setItem(getStorageKey(userId, "cards"), JSON.stringify(updated));
+  lang?: string,
+  targetLang?: string,
+): Promise<void> {
+  await api("/api/cards/reset-progress", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ deckId, lang, targetLang }),
+  });
 }
 
-export function deleteCard(userId: string, cardId: string): void {
-  const cards = getCards(userId);
-  const updated = cards.filter((c) => c.id !== cardId);
-  localStorage.setItem(getStorageKey(userId, "cards"), JSON.stringify(updated));
+// ─── History ─────────────────────────────────────────
+
+export async function getHistory(): Promise<TranslationHistoryItem[]> {
+  const raw = await api<ApiHistoryItem[]>("/api/history");
+  return raw.map(toHistoryItem);
 }
 
-/** Deletes all cards in the given language. The language will disappear from the decks list. */
-export function deleteLanguage(userId: string, lang: string): void {
-  const cards = getCards(userId);
-  const normalizedLang = normalizeLanguageCode(lang);
-  const updated = cards.filter(
-    (c) => normalizeLanguageCode(c.foreignLanguage ?? "en") !== normalizedLang
-  );
-  localStorage.setItem(getStorageKey(userId, "cards"), JSON.stringify(updated));
+export async function addToHistory(
+  item: Omit<TranslationHistoryItem, "id" | "createdAt">,
+): Promise<TranslationHistoryItem> {
+  const raw = await api<ApiHistoryItem>("/api/history", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      foreign_word: item.foreign,
+      translation: item.translation,
+      custom_translation: item.customTranslation || undefined,
+      foreign_language: item.foreignLanguage,
+      translation_language: item.translationLanguage,
+    }),
+  });
+  return toHistoryItem(raw);
 }
 
-/** Deletes a deck and removes it from all cards. Cannot delete ALL_CARDS_DECK_ID. */
-export function renameDeck(userId: string, deckId: string, name: string): void {
-  if (deckId === ALL_CARDS_DECK_ID) return;
-  const decks = getDecks(userId);
-  const updated = decks.map((d) => (d.id === deckId ? { ...d, name } : d));
-  saveDecks(userId, updated);
+export async function clearHistory(): Promise<void> {
+  await api("/api/history", { method: "DELETE" });
 }
 
-export function deleteDeck(userId: string, deckId: string): void {
-  if (deckId === ALL_CARDS_DECK_ID) return;
-
-  const decks = getDecks(userId);
-  const updatedDecks = decks.filter((d) => d.id !== deckId);
-  saveDecks(userId, updatedDecks);
-
-  const cards = getCards(userId);
-  const updatedCards = cards.map((c) => ({
-    ...c,
-    deckIds: c.deckIds.filter((id) => id !== deckId),
-  }));
-  localStorage.setItem(getStorageKey(userId, "cards"), JSON.stringify(updatedCards));
+export async function removeFromHistory(itemId: string): Promise<void> {
+  await api(`/api/history?id=${encodeURIComponent(itemId)}`, { method: "DELETE" });
 }

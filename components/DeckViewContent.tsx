@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  getCurrentUser,
   getDecksForUser,
   getCardsForDeck,
   getDeckProgress,
@@ -58,19 +57,20 @@ export function DeckViewContent({ deckId, lang, targetLang }: DeckViewContentPro
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const router = useRouter();
 
-  const loadData = useCallback(() => {
-    const user = getCurrentUser();
-    if (!user.id) return;
+  const loadData = useCallback(async () => {
+    try {
+      const decks = await getDecksForUser();
+      const found = decks.find((d) => d.id === deckId);
+      if (!found) return;
 
-    const decks = getDecksForUser(user.id);
-    const found = decks.find((d) => d.id === deckId);
-    if (!found) return;
-
-    const displayName =
-      deckId === ALL_CARDS_DECK_ID && lang ? t("decks_all_cards") : found.name;
-    setDeck({ ...found, name: displayName });
-    setCards(getCardsForDeck(user.id, deckId, lang, targetLang));
-    setProgress(getDeckProgress(user.id, deckId, lang, targetLang));
+      const displayName =
+        deckId === ALL_CARDS_DECK_ID && lang ? t("decks_all_cards") : found.name;
+      setDeck({ ...found, name: displayName });
+      setCards(await getCardsForDeck(deckId, lang, targetLang));
+      setProgress(await getDeckProgress(deckId, lang, targetLang));
+    } catch {
+      // error
+    }
   }, [deckId, lang, targetLang]);
 
   useEffect(() => {
@@ -100,30 +100,33 @@ export function DeckViewContent({ deckId, lang, targetLang }: DeckViewContentPro
 
   const isCustomDeck = deckId !== ALL_CARDS_DECK_ID;
 
-  function handleDeleteDeck() {
-    const user = getCurrentUser();
-    if (!user.id || !deck) return;
+  async function handleDeleteDeck() {
+    if (!deck) return;
     if (!confirm(t("deck_delete_deck_confirm").replace("{name}", deck.name))) return;
-    deleteDeck(user.id, deckId);
-    router.push("/decks");
+    try {
+      await deleteDeck(deckId);
+      router.push("/decks");
+    } catch {
+      // error
+    }
   }
 
-  function handleDeleteSelected() {
+  async function handleDeleteSelected() {
     if (selectedIds.size === 0) return;
     const msg = t("deck_edit_delete_confirm").replace("{n}", String(selectedIds.size));
     if (!confirm(msg)) return;
 
-    const user = getCurrentUser();
-    if (!user.id) return;
-
-    for (const id of selectedIds) {
-      deleteCard(user.id, id);
+    try {
+      for (const id of selectedIds) {
+        await deleteCard(id);
+      }
+      setCards((prev) => prev.filter((c) => !selectedIds.has(c.id)));
+      setProgress((prev) => ({ ...prev, total: Math.max(0, prev.total - selectedIds.size) }));
+      setSelectedIds(new Set());
+      setIsEditing(false);
+    } catch {
+      // error
     }
-
-    setCards((prev) => prev.filter((c) => !selectedIds.has(c.id)));
-    setProgress((prev) => ({ ...prev, total: Math.max(0, prev.total - selectedIds.size) }));
-    setSelectedIds(new Set());
-    setIsEditing(false);
   }
 
   function handleCancelEdit() {

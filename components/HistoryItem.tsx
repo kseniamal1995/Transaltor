@@ -1,7 +1,7 @@
 "use client";
 
 import type { Deck } from "@/types";
-import { getCurrentUser, isCardDuplicate, saveCard } from "@/lib/storage";
+import { isCardDuplicate, saveCard } from "@/lib/storage";
 import { DropdownMenu } from "./DropdownMenu";
 import { t } from "@/lib/strings";
 import { IconButton } from "./IconButton";
@@ -30,27 +30,29 @@ export function HistoryItem({
 }: HistoryItemProps) {
   const { showToast } = useToast();
 
-  function handleSaveToDeck(deckId: string) {
-    const user = getCurrentUser();
-    if (!user.id) return;
-
+  async function handleSaveToDeck(deckId: string) {
     const deckName = decks.find((d) => d.id === deckId)?.name ?? "";
 
-    if (isCardDuplicate(user.id, foreign, deckId)) {
-      showToast(t("card_duplicate").replace("{deck}", deckName), "error");
-      return;
-    }
+    try {
+      const duplicate = await isCardDuplicate(foreign, deckId);
+      if (duplicate) {
+        showToast(t("card_duplicate").replace("{deck}", deckName), "error");
+        return;
+      }
 
-    saveCard(user.id, {
-      foreign,
-      translation,
-      customTranslation: customTranslation?.trim() || undefined,
-      foreignLanguage,
-      translationLanguage,
-      deckIds: [deckId],
-    });
-    showToast(t("card_saved").replace("{deck}", deckName));
-    onSaved();
+      await saveCard({
+        foreign,
+        translation,
+        customTranslation: customTranslation?.trim() || undefined,
+        foreignLanguage,
+        translationLanguage,
+        deckIds: [deckId],
+      });
+      showToast(t("card_saved").replace("{deck}", deckName));
+      onSaved();
+    } catch {
+      showToast(t("translate_error"), "error");
+    }
   }
 
   const displayTranslation = customTranslation?.trim() || translation;

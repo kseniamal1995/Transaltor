@@ -15,7 +15,7 @@ interface DeckSelectWithCreateProps {
   decks: Deck[];
   value: string;
   onChange: (deckId: string) => void;
-  onCreateDeck: (name: string) => Deck;
+  onCreateDeck: (name: string) => Deck | Promise<Deck>;
   onDeckCreated?: (deck: Deck) => void;
   className?: string;
 }
@@ -93,10 +93,10 @@ export function DeckSelectWithCreate({
     setTimeout(() => createInputRef.current?.focus(), 0);
   }
 
-  function handleCreate() {
+  async function handleCreate() {
     const trimmed = newDeckName.trim();
     if (!trimmed) return;
-    const newDeck = onCreateDeck(trimmed);
+    const newDeck = await onCreateDeck(trimmed);
     onDeckCreated?.(newDeck);
     setIsCreating(false);
     setNewDeckName("");

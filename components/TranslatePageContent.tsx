@@ -5,8 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   addToHistory,
   createDeck,
-  getCurrentUser,
-  getDecksForUser,
+  getDecksForLanguage,
   isCardDuplicate,
   saveCard,
 } from "@/lib/storage";
@@ -64,27 +63,21 @@ export function TranslatePageContent() {
     if (stored !== "ru") setTargetLang(stored);
   }, []);
 
-  // Загрузка словарей. Повторяем с задержкой: GuestUserSync/ClerkUserSync могут ещё не успеть установить user.
   useEffect(() => {
-    function loadDecks() {
-      const user = getCurrentUser();
-      if (user.id) {
-        const userDecks = getDecksForUser(user.id);
+    async function loadDecks() {
+      try {
+        const userDecks = await getDecksForLanguage(detectedLang);
         setDecks(userDecks);
         setSelectedDeckId((prev) => {
           const valid = userDecks.some((d) => d.id === prev);
           return valid ? prev : userDecks[0]?.id ?? "";
         });
+      } catch {
+        // API not ready yet
       }
     }
     loadDecks();
-    const t1 = setTimeout(loadDecks, 150);
-    const t2 = setTimeout(loadDecks, 600);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
-  }, []);
+  }, [detectedLang]);
 
   const doTranslate = useCallback(async (text: string, from: string, to: string) => {
     const langPair = getLangPair(from, to);
@@ -107,8 +100,9 @@ export function TranslatePageContent() {
       try {
         const detected = sourceLang === "auto" ? await detectLanguage(trimmed) : sourceLang;
         const result = await doTranslate(trimmed, detected, targetLang);
-        const lang = sanitizeDetectedForShortText(trimmed, result.sourceLanguage);
-        const langToSave = lang === "auto" ? "en" : lang;
+        const langToSave = sourceLang === "auto"
+          ? (sanitizeDetectedForShortText(trimmed, result.sourceLanguage) === "auto" ? "en" : sanitizeDetectedForShortText(trimmed, result.sourceLanguage))
+          : sourceLang;
 
         setTranslatedText(result.translatedText);
         setDetectedLang(langToSave);
@@ -117,15 +111,12 @@ export function TranslatePageContent() {
           setSourceLang(langToSave);
         }
 
-        const user = getCurrentUser();
-        if (user.id) {
-          addToHistory(user.id, {
-            foreign: trimmed,
-            translation: result.translatedText,
-            foreignLanguage: langToSave,
-            translationLanguage: targetLang,
-          });
-        }
+        addToHistory({
+          foreign: trimmed,
+          translation: result.translatedText,
+          foreignLanguage: langToSave,
+          translationLanguage: targetLang,
+        }).catch(() => {});
       } catch (err) {
         setError(err instanceof Error ? err.message : t("translate_error"));
         setTranslatedText(null);
@@ -205,22 +196,20 @@ export function TranslatePageContent() {
     });
   }
 
-  function handleSaveCard() {
+  async function handleSaveCard() {
     if (!sourceText || !translatedText) return;
-
-    const user = getCurrentUser();
-    if (!user.id) return;
 
     const deckName = decks.find((d) => d.id === selectedDeckId)?.name ?? "";
 
-    if (isCardDuplicate(user.id, sourceText, selectedDeckId)) {
-      showToast(t("card_duplicate").replace("{deck}", deckName), "error");
-      return;
-    }
-
     setIsSaving(true);
     try {
-      saveCard(user.id, {
+      const duplicate = await isCardDuplicate(sourceText, selectedDeckId);
+      if (duplicate) {
+        showToast(t("card_duplicate").replace("{deck}", deckName), "error");
+        return;
+      }
+
+      await saveCard({
         foreign: sourceText,
         translation: translatedText,
         customTranslation: customTranslation.trim() || undefined,
@@ -230,6 +219,8 @@ export function TranslatePageContent() {
       });
       showToast(t("card_saved").replace("{deck}", deckName));
       setCustomTranslation("");
+    } catch {
+      showToast(t("translate_error"), "error");
     } finally {
       setIsSaving(false);
     }
@@ -288,7 +279,7 @@ export function TranslatePageContent() {
               decks={decks}
               selectedDeckId={selectedDeckId}
               onDeckChange={setSelectedDeckId}
-              onCreateDeck={(name) => createDeck(getCurrentUser().id, name)}
+              onCreateDeck={(name) => createDeck(name)}
               onDeckCreated={(deck) => setDecks((prev) => [...prev, deck])}
               onSave={handleSaveCard}
               isSaving={isSaving}

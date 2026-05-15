@@ -10,7 +10,7 @@ interface SaveCardFormProps {
   selectedDeckId: string;
   onDeckChange: (deckId: string) => void;
   onDeckCreated?: (deck: Deck) => void;
-  onCreateDeck: (name: string) => Deck;
+  onCreateDeck: (name: string) => Deck | Promise<Deck>;
   onSave: () => void;
   onCancel?: () => void;
   isSaving?: boolean;

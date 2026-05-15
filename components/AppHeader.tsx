@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { t } from "@/lib/strings";
-import { STORAGE_KEYS } from "@/lib/constants";
 import { NAV_TABS, isNavActive } from "@/lib/nav";
 
 function BurgerIcon({ className }: { className?: string }) {
@@ -89,10 +88,6 @@ export function AppHeader() {
 
   function handleLogoutClick() {
     setMobileMenuOpen(false);
-    if (typeof window !== "undefined") {
-      localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
-      localStorage.removeItem(STORAGE_KEYS.GUEST_USER_ID);
-    }
     signOut({ redirectUrl: "/sign-in" });
   }
 

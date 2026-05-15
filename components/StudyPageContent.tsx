@@ -7,7 +7,6 @@ import { getButtonClassName, Button } from "./Button";
 import { PlayIcon } from "./icons/PlayIcon";
 import { PAGE_LAYOUT_CLASSES } from "@/lib/ui-classes";
 import {
-  getCurrentUser,
   getDecksForUser,
   getCardsForDeck,
   getDeckProgress,
@@ -59,22 +58,24 @@ export function StudyPageContent({ deckId, lang, targetLang }: StudyPageContentP
   const touchStartX = useRef(0);
   const swipeOffsetRef = useRef(0);
 
-  const loadData = useCallback(() => {
-    const user = getCurrentUser();
-    if (!user.id) return;
-
-    const decks = getDecksForUser(user.id);
-    const found = decks.find((d) => d.id === deckId);
-    if (found) {
-      const displayName = deckId === ALL_CARDS_DECK_ID && lang ? t("decks_all_cards") : found.name;
-      setDeck({ ...found, name: displayName });
-      const deckCards = getCardsForDeck(user.id, deckId, lang, targetLang);
-      const unlearnedCards = deckCards.filter((c) => !c.learned);
-      setCards(unlearnedCards);
-      setProgress(getDeckProgress(user.id, deckId, lang, targetLang));
-      setCurrentIndex(0);
-      setIsFlipped(false);
-      setSessionComplete(false);
+  const loadData = useCallback(async () => {
+    try {
+      const decks = await getDecksForUser();
+      const found = decks.find((d) => d.id === deckId);
+      if (found) {
+        const displayName = deckId === ALL_CARDS_DECK_ID && lang ? t("decks_all_cards") : found.name;
+        setDeck({ ...found, name: displayName });
+        const deckCards = await getCardsForDeck(deckId, lang, targetLang);
+        const unlearnedCards = deckCards.filter((c) => !c.learned);
+        setCards(unlearnedCards);
+        const prog = await getDeckProgress(deckId, lang, targetLang);
+        setProgress(prog);
+        setCurrentIndex(0);
+        setIsFlipped(false);
+        setSessionComplete(false);
+      }
+    } catch {
+      // error
     }
   }, [deckId, lang, targetLang]);
 
@@ -95,10 +96,7 @@ export function StudyPageContent({ deckId, lang, targetLang }: StudyPageContentP
     if (!currentCard || animating.current) return;
     animating.current = true;
 
-    const user = getCurrentUser();
-    if (user.id) {
-      setCardLearned(user.id, currentCard.id, learned);
-    }
+    setCardLearned(currentCard.id, learned).catch(() => {});
 
     if (learned) {
       setProgress((prev) => ({

@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  getCurrentUser,
   getCardsForDeck,
   deleteCard,
   deleteLanguage,
@@ -84,12 +83,15 @@ export function LanguageDeckPageContent({ lang, targetLang }: LanguageDeckPageCo
   const [visibleCount, setVisibleCount] = useState(10);
   const router = useRouter();
 
-  const loadCards = useCallback(() => {
-    const user = getCurrentUser();
-    if (!user.id) return;
-    const deckCards = getCardsForDeck(user.id, ALL_CARDS_DECK_ID, lang, targetLang);
-    setCards(deckCards);
-    setProgress(getDeckProgress(user.id, ALL_CARDS_DECK_ID, lang, targetLang));
+  const loadCards = useCallback(async () => {
+    try {
+      const deckCards = await getCardsForDeck(ALL_CARDS_DECK_ID, lang, targetLang);
+      setCards(deckCards);
+      const prog = await getDeckProgress(ALL_CARDS_DECK_ID, lang, targetLang);
+      setProgress(prog);
+    } catch {
+      // error
+    }
   }, [lang, targetLang]);
 
   useEffect(() => {
@@ -98,41 +100,43 @@ export function LanguageDeckPageContent({ lang, targetLang }: LanguageDeckPageCo
 
   const displayTranslation = (card: CardItem) => card.customTranslation || card.translation;
 
-  function handleDeleteLanguage() {
-    const user = getCurrentUser();
-    if (!user.id) return;
-    if (targetLang) {
-      const srcName = getLanguageName(lang);
-      const tgtName = getLanguageName(targetLang);
-      const msg = t("deck_delete_pair_confirm")
-        .replace("{source}", srcName)
-        .replace("{target}", tgtName);
-      if (!confirm(msg)) return;
-      deleteLanguagePair(user.id, lang, targetLang);
-    } else {
-      const langName = getLanguageName(lang);
-      if (!confirm(t("deck_delete_lang_confirm").replace("{lang}", langName))) return;
-      deleteLanguage(user.id, lang);
+  async function handleDeleteLanguage() {
+    try {
+      if (targetLang) {
+        const srcName = getLanguageName(lang);
+        const tgtName = getLanguageName(targetLang);
+        const msg = t("deck_delete_pair_confirm")
+          .replace("{source}", srcName)
+          .replace("{target}", tgtName);
+        if (!confirm(msg)) return;
+        await deleteLanguagePair(lang, targetLang);
+      } else {
+        const langName = getLanguageName(lang);
+        if (!confirm(t("deck_delete_lang_confirm").replace("{lang}", langName))) return;
+        await deleteLanguage(lang);
+      }
+      router.push("/decks");
+    } catch {
+      // error
     }
-    router.push("/decks");
   }
 
-  function handleDeleteSelected() {
+  async function handleDeleteSelected() {
     if (selectedIds.size === 0) return;
     const msg = t("deck_edit_delete_confirm").replace("{n}", String(selectedIds.size));
     if (!confirm(msg)) return;
 
-    const user = getCurrentUser();
-    if (!user.id) return;
-
-    for (const id of selectedIds) {
-      deleteCard(user.id, id);
+    try {
+      for (const id of selectedIds) {
+        await deleteCard(id);
+      }
+      setCards((prev) => prev.filter((c) => !selectedIds.has(c.id)));
+      setProgress((prev) => ({ ...prev, total: Math.max(0, prev.total - selectedIds.size) }));
+      setSelectedIds(new Set());
+      setIsEditing(false);
+    } catch {
+      // error
     }
-
-    setCards((prev) => prev.filter((c) => !selectedIds.has(c.id)));
-    setProgress((prev) => ({ ...prev, total: Math.max(0, prev.total - selectedIds.size) }));
-    setSelectedIds(new Set());
-    setIsEditing(false);
   }
 
   function handleCancelEdit() {

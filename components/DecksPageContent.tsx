@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
-  getCurrentUser,
   getLanguagePairsInUse,
   getDecksForLanguage,
   getDeckProgress,
@@ -103,7 +102,6 @@ function LanguageCard({ pairs, selected, onSelect, onStudyClick, dictHref }: Lan
   return (
     <div ref={ref} className="bg-surface rounded-2xl border border-border transition-all">
       <div className="px-6 py-5 flex flex-col gap-5 md:gap-6">
-        {/* Заголовок: флаг + язык */}
         <div className="flex items-center justify-between gap-4">
           <div className="flex-1 min-w-0 flex items-center gap-3 relative">
             <FlagIcon code={selected.source} size={24} />
@@ -170,14 +168,12 @@ function LanguageCard({ pairs, selected, onSelect, onStudyClick, dictHref }: Lan
               )}
             </div>
           </div>
-          {/* Кол-во слов: на мобилке скрыто (переносится в отдельную строку) */}
           <span className="hidden md:flex items-center gap-1.5 text-sm text-text-secondary shrink-0">
             <CardsIcon className="w-5 h-5 text-border" />
             {formatWordCount(selected.total)}
           </span>
         </div>
 
-        {/* Мобилка: кол-во слов + прогресс-кольцо в одну строку */}
         <div className="flex md:hidden items-center justify-between">
           <span className="flex items-center gap-1.5 text-sm text-text-secondary">
             <CardsIcon className="w-5 h-5 text-border" />
@@ -186,7 +182,6 @@ function LanguageCard({ pairs, selected, onSelect, onStudyClick, dictHref }: Lan
           <DeckProgressBar learned={selected.learned} total={selected.total} size="sm" />
         </div>
 
-        {/* Кнопки */}
         <div className="flex flex-col md:flex-row items-center gap-3">
           <div className="flex flex-col md:flex-row md:flex-1 items-center gap-3 w-full md:w-auto">
             <button
@@ -234,55 +229,67 @@ export function DecksPageContent() {
     studyHref: string;
   } | null>(null);
 
-  function loadPairs() {
-    const user = getCurrentUser();
-    if (!user.id) return;
-    const p = getLanguagePairsInUse(user.id);
-    setPairs(p);
-    if (p.length > 0 && !selectedPair) setSelectedPair(p[0]);
-    if (p.length > 0 && selectedPair) {
-      const still = p.find(
-        (pp) => pp.source === selectedPair.source && pp.target === selectedPair.target,
-      );
-      setSelectedPair(still ?? p[0]);
+  const loadPairs = useCallback(async () => {
+    try {
+      const p = await getLanguagePairsInUse();
+      setPairs(p);
+      setSelectedPair((prev) => {
+        if (p.length === 0) return null;
+        if (!prev) return p[0];
+        const still = p.find((pp) => pp.source === prev.source && pp.target === prev.target);
+        return still ?? p[0];
+      });
+    } catch {
+      // error
     }
-  }
+  }, []);
 
   useEffect(() => {
     loadPairs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadPairs]);
 
-  const loadDecks = useCallback(() => {
+  const loadDecks = useCallback(async () => {
     if (!selectedPair) return;
-    const user = getCurrentUser();
-    if (!user.id) return;
-    const all = getDecksForLanguage(user.id, selectedPair.source);
-    const withProgress = all.map((deck) => {
-      const { total, learned } = getDeckProgress(user.id, deck.id, selectedPair.source, selectedPair.target);
-      return { ...deck, total, learned };
-    });
-    setDecks(withProgress);
+    try {
+      const all = await getDecksForLanguage(selectedPair.source);
+      const withProgress = await Promise.all(
+        all.map(async (deck) => {
+          const { total, learned } = await getDeckProgress(deck.id, selectedPair.source, selectedPair.target);
+          return { ...deck, total, learned };
+        }),
+      );
+      setDecks(withProgress);
+    } catch {
+      // error
+    }
   }, [selectedPair]);
 
   useEffect(() => {
     loadDecks();
   }, [loadDecks]);
 
-  function handleDelete(deckId: string, deckName: string) {
+  async function handleDelete(deckId: string, deckName: string) {
     if (!confirm(`${t("deck_menu_delete")} «${deckName}»?`)) return;
-    const user = getCurrentUser();
-    if (user.id) { deleteDeck(user.id, deckId); loadDecks(); }
+    try {
+      await deleteDeck(deckId);
+      loadDecks();
+    } catch {
+      // error
+    }
   }
 
-  function handleRename(deckId: string, currentName: string) {
+  async function handleRename(deckId: string, currentName: string) {
     const newName = prompt(t("deck_rename_prompt"), currentName);
     if (!newName || newName.trim() === currentName) return;
-    const user = getCurrentUser();
-    if (user.id) { renameDeck(user.id, deckId, newName.trim()); loadDecks(); }
+    try {
+      await renameDeck(deckId, newName.trim());
+      loadDecks();
+    } catch {
+      // error
+    }
   }
 
-  function handleDeletePair() {
+  async function handleDeletePair() {
     if (!selectedPair) return;
     const srcName = getLanguageName(selectedPair.source);
     const tgtName = getLanguageName(selectedPair.target);
@@ -290,37 +297,42 @@ export function DecksPageContent() {
       .replace("{source}", srcName)
       .replace("{target}", tgtName);
     if (!confirm(msg)) return;
-    const user = getCurrentUser();
-    if (!user.id) return;
-    deleteLanguagePair(user.id, selectedPair.source, selectedPair.target);
-    loadPairs();
+    try {
+      await deleteLanguagePair(selectedPair.source, selectedPair.target);
+      loadPairs();
+    } catch {
+      // error
+    }
   }
 
-  function handleStudyClick(deckId: string, studyHref: string, lang?: string, tLang?: string) {
-    const user = getCurrentUser();
-    if (!user.id) { router.push(studyHref); return; }
-    const deckCards = getCardsForDeck(user.id, deckId, lang, tLang);
-    const unlearned = deckCards.filter((c) => !c.learned);
-    if (deckCards.length > 0 && unlearned.length === 0) {
-      setAllLearnedModal({ deckId, lang, targetLang: tLang, studyHref });
-    } else {
+  async function handleStudyClick(deckId: string, studyHref: string, lang?: string, tLang?: string) {
+    try {
+      const deckCards = await getCardsForDeck(deckId, lang, tLang);
+      const unlearned = deckCards.filter((c) => !c.learned);
+      if (deckCards.length > 0 && unlearned.length === 0) {
+        setAllLearnedModal({ deckId, lang, targetLang: tLang, studyHref });
+      } else {
+        router.push(studyHref);
+      }
+    } catch {
       router.push(studyHref);
     }
   }
 
-  function handleResetAndStudy() {
+  async function handleResetAndStudy() {
     if (!allLearnedModal) return;
-    const user = getCurrentUser();
-    if (!user.id) return;
     const { deckId, lang, targetLang, studyHref } = allLearnedModal;
-    resetDeckProgress(user.id, deckId, lang, targetLang);
-    setAllLearnedModal(null);
-    loadPairs();
-    loadDecks();
-    router.push(studyHref);
+    try {
+      await resetDeckProgress(deckId, lang, targetLang);
+      setAllLearnedModal(null);
+      await loadPairs();
+      await loadDecks();
+      router.push(studyHref);
+    } catch {
+      // error
+    }
   }
 
-  /* Пустой стейт */
   if (pairs.length === 0) {
     return (
       <div className={`${PAGE_LAYOUT_CLASSES} gap-10`}>
@@ -354,7 +366,6 @@ export function DecksPageContent() {
   return (
     <div className={`${PAGE_LAYOUT_CLASSES} gap-10`}>
       <div className="w-full flex flex-col gap-8 p-0">
-        {/* ── Верхняя карточка: языковая пара + общий прогресс ── */}
         <LanguageCard
           pairs={pairs}
           selected={selectedPair}
@@ -370,7 +381,6 @@ export function DecksPageContent() {
           dictHref={`/decks/${encodeURIComponent(selectedLang)}?targetLang=${encodeURIComponent(selectedTargetLang)}`}
         />
 
-        {/* ── Ваши словари ── */}
         <section>
           <h2 className="font-display text-[22px] font-normal text-text mb-4">
             {t("decks_tab_my")}

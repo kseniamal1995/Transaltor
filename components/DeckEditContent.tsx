@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
-  getCurrentUser,
   getDecksForUser,
   getCardsForDeck,
   deleteCard,
@@ -33,17 +32,18 @@ export function DeckEditContent({ deckId, lang, targetLang }: DeckEditContentPro
   const [deck, setDeck] = useState<{ id: string; name: string } | null>(null);
   const [cards, setCards] = useState<CardItem[]>([]);
 
-  function load() {
-    const user = getCurrentUser();
-    if (!user.id) return;
-
-    const decks = getDecksForUser(user.id);
-    const found = decks.find((d) => d.id === deckId);
-    if (found) {
-      const displayName = deckId === ALL_CARDS_DECK_ID && lang ? t("decks_all_cards") : found.name;
-      setDeck({ ...found, name: displayName });
-      const deckCards = getCardsForDeck(user.id, deckId, lang, targetLang);
-      setCards(deckCards);
+  async function load() {
+    try {
+      const decks = await getDecksForUser();
+      const found = decks.find((d) => d.id === deckId);
+      if (found) {
+        const displayName = deckId === ALL_CARDS_DECK_ID && lang ? t("decks_all_cards") : found.name;
+        setDeck({ ...found, name: displayName });
+        const deckCards = await getCardsForDeck(deckId, lang, targetLang);
+        setCards(deckCards);
+      }
+    } catch {
+      // error
     }
   }
 
@@ -51,11 +51,13 @@ export function DeckEditContent({ deckId, lang, targetLang }: DeckEditContentPro
     load();
   }, [deckId, lang]);
 
-  function handleDeleteCard(cardId: string) {
-    const user = getCurrentUser();
-    if (!user.id) return;
-    deleteCard(user.id, cardId);
-    setCards((prev) => prev.filter((c) => c.id !== cardId));
+  async function handleDeleteCard(cardId: string) {
+    try {
+      await deleteCard(cardId);
+      setCards((prev) => prev.filter((c) => c.id !== cardId));
+    } catch {
+      // error
+    }
   }
 
   if (!deck) {

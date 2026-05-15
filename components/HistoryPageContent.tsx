@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { getCurrentUser, getDecksForUser, getHistory, clearHistory } from "@/lib/storage";
+import { getDecksForUser, getHistory, clearHistory } from "@/lib/storage";
 import { HistoryItem } from "./HistoryItem";
 import { EmptyStateIllustration } from "./EmptyStateIllustration";
 import { SearchIcon } from "./icons/SearchIcon";
@@ -17,11 +17,13 @@ export function HistoryPageContent() {
   const [query, setQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(10);
 
-  function loadData() {
-    const user = getCurrentUser();
-    if (user.id) {
-      setHistory(getHistory(user.id));
-      setDecks(getDecksForUser(user.id));
+  async function loadData() {
+    try {
+      const [h, d] = await Promise.all([getHistory(), getDecksForUser()]);
+      setHistory(h);
+      setDecks(d);
+    } catch {
+      // API error
     }
   }
 
@@ -29,12 +31,14 @@ export function HistoryPageContent() {
     loadData();
   }, []);
 
-  function handleClearHistory() {
+  async function handleClearHistory() {
     if (!confirm(t("history_clear_confirm"))) return;
-    const user = getCurrentUser();
-    if (!user.id) return;
-    clearHistory(user.id);
-    setHistory([]);
+    try {
+      await clearHistory();
+      setHistory([]);
+    } catch {
+      // error
+    }
   }
 
   const filtered = useMemo(() => {
