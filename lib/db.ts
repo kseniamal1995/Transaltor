@@ -1,4 +1,4 @@
-import { getSupabase } from "./supabase";
+import { sql } from "./postgres";
 
 // ─── Types ───────────────────────────────────────────
 
@@ -36,75 +36,57 @@ export interface DbHistoryItem {
 // ─── Decks ───────────────────────────────────────────
 
 export async function getDecks(userId: string): Promise<DbDeck[]> {
-  const { data, error } = await getSupabase()
-    .from("decks")
-    .select("*")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: true });
-
-  if (error) throw error;
-  return data ?? [];
+  const { rows } = await sql`
+    SELECT id, user_id, name, created_at
+    FROM decks
+    WHERE user_id = ${userId}
+    ORDER BY created_at ASC
+  `;
+  return rows as DbDeck[];
 }
 
 export async function createDeck(userId: string, name: string): Promise<DbDeck> {
-  const { data, error } = await getSupabase()
-    .from("decks")
-    .insert({ user_id: userId, name })
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
+  const { rows } = await sql`
+    INSERT INTO decks (user_id, name)
+    VALUES (${userId}, ${name})
+    RETURNING id, user_id, name, created_at
+  `;
+  return rows[0] as DbDeck;
 }
 
 export async function renameDeck(userId: string, deckId: string, name: string): Promise<void> {
-  const { error } = await getSupabase()
-    .from("decks")
-    .update({ name })
-    .eq("id", deckId)
-    .eq("user_id", userId);
-
-  if (error) throw error;
+  await sql`
+    UPDATE decks SET name = ${name}
+    WHERE id = ${deckId}::uuid AND user_id = ${userId}
+  `;
 }
 
 export async function deleteDeck(userId: string, deckId: string): Promise<void> {
-  const { error } = await getSupabase()
-    .from("decks")
-    .delete()
-    .eq("id", deckId)
-    .eq("user_id", userId);
-
-  if (error) throw error;
+  await sql`
+    DELETE FROM decks
+    WHERE id = ${deckId}::uuid AND user_id = ${userId}
+  `;
 }
 
 // ─── Cards ───────────────────────────────────────────
 
 export async function getCards(userId: string): Promise<DbCard[]> {
-  const { data, error } = await getSupabase()
-    .from("cards")
-    .select(`
-      *,
-      card_decks (deck_id)
-    `)
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false });
-
-  if (error) throw error;
-
-  return (data ?? []).map((row: Record<string, unknown>) => ({
-    id: row.id as string,
-    user_id: row.user_id as string,
-    foreign_word: row.foreign_word as string,
-    translation: row.translation as string,
-    custom_translation: row.custom_translation as string | null,
-    foreign_language: row.foreign_language as string | null,
-    translation_language: row.translation_language as string | null,
-    learned: row.learned as boolean,
-    created_at: row.created_at as string,
-    deck_ids: ((row.card_decks as { deck_id: string }[]) ?? []).map(
-      (cd) => cd.deck_id,
-    ),
-  }));
+  const { rows } = await sql`
+    SELECT
+      c.id, c.user_id, c.foreign_word, c.translation,
+      c.custom_translation, c.foreign_language, c.translation_language,
+      c.learned, c.created_at,
+      COALESCE(
+        array_agg(cd.deck_id) FILTER (WHERE cd.deck_id IS NOT NULL),
+        '{}'
+      ) AS deck_ids
+    FROM cards c
+    LEFT JOIN card_decks cd ON cd.card_id = c.id
+    WHERE c.user_id = ${userId}
+    GROUP BY c.id
+    ORDER BY c.created_at DESC
+  `;
+  return rows as DbCard[];
 }
 
 export async function createCard(
@@ -118,34 +100,29 @@ export async function createCard(
     deck_ids: string[];
   },
 ): Promise<DbCard> {
-  const sb = getSupabase();
-
-  const { data: inserted, error } = await sb
-    .from("cards")
-    .insert({
-      user_id: userId,
-      foreign_word: card.foreign_word,
-      translation: card.translation,
-      custom_translation: card.custom_translation ?? null,
-      foreign_language: card.foreign_language ?? null,
-      translation_language: card.translation_language ?? null,
-    })
-    .select()
-    .single();
-
-  if (error) throw error;
+  const { rows } = await sql`
+    INSERT INTO cards (user_id, foreign_word, translation, custom_translation, foreign_language, translation_language)
+    VALUES (
+      ${userId},
+      ${card.foreign_word},
+      ${card.translation},
+      ${card.custom_translation ?? null},
+      ${card.foreign_language ?? null},
+      ${card.translation_language ?? null}
+    )
+    RETURNING *
+  `;
+  const inserted = rows[0];
 
   const realDeckIds = card.deck_ids.filter((id) => id !== "all-cards");
-  if (realDeckIds.length > 0) {
-    const links = realDeckIds.map((deckId) => ({
-      card_id: inserted.id,
-      deck_id: deckId,
-    }));
-    const { error: linkError } = await sb.from("card_decks").insert(links);
-    if (linkError) throw linkError;
+  for (const deckId of realDeckIds) {
+    await sql`
+      INSERT INTO card_decks (card_id, deck_id)
+      VALUES (${inserted.id}::uuid, ${deckId}::uuid)
+    `;
   }
 
-  return { ...inserted, deck_ids: card.deck_ids };
+  return { ...inserted, deck_ids: card.deck_ids } as DbCard;
 }
 
 export async function updateCardLearned(
@@ -153,23 +130,17 @@ export async function updateCardLearned(
   cardId: string,
   learned: boolean,
 ): Promise<void> {
-  const { error } = await getSupabase()
-    .from("cards")
-    .update({ learned })
-    .eq("id", cardId)
-    .eq("user_id", userId);
-
-  if (error) throw error;
+  await sql`
+    UPDATE cards SET learned = ${learned}
+    WHERE id = ${cardId}::uuid AND user_id = ${userId}
+  `;
 }
 
 export async function deleteCard(userId: string, cardId: string): Promise<void> {
-  const { error } = await getSupabase()
-    .from("cards")
-    .delete()
-    .eq("id", cardId)
-    .eq("user_id", userId);
-
-  if (error) throw error;
+  await sql`
+    DELETE FROM cards
+    WHERE id = ${cardId}::uuid AND user_id = ${userId}
+  `;
 }
 
 export async function deleteCardsByLanguagePair(
@@ -177,27 +148,22 @@ export async function deleteCardsByLanguagePair(
   source: string,
   target: string,
 ): Promise<void> {
-  const { error } = await getSupabase()
-    .from("cards")
-    .delete()
-    .eq("user_id", userId)
-    .eq("foreign_language", source)
-    .eq("translation_language", target);
-
-  if (error) throw error;
+  await sql`
+    DELETE FROM cards
+    WHERE user_id = ${userId}
+      AND foreign_language = ${source}
+      AND translation_language = ${target}
+  `;
 }
 
 export async function deleteCardsByLanguage(
   userId: string,
   lang: string,
 ): Promise<void> {
-  const { error } = await getSupabase()
-    .from("cards")
-    .delete()
-    .eq("user_id", userId)
-    .eq("foreign_language", lang);
-
-  if (error) throw error;
+  await sql`
+    DELETE FROM cards
+    WHERE user_id = ${userId} AND foreign_language = ${lang}
+  `;
 }
 
 export async function resetDeckProgress(
@@ -206,25 +172,42 @@ export async function resetDeckProgress(
   lang?: string,
   targetLang?: string,
 ): Promise<void> {
-  const cards = await getCards(userId);
-  const ids = cards
-    .filter((c) => {
-      const inDeck = deckId === "all-cards" || c.deck_ids.includes(deckId);
-      const matchLang = !lang || c.foreign_language === lang;
-      const matchTarget = !targetLang || c.translation_language === targetLang;
-      return inDeck && matchLang && matchTarget;
-    })
-    .map((c) => c.id);
-
-  if (ids.length === 0) return;
-
-  const { error } = await getSupabase()
-    .from("cards")
-    .update({ learned: false })
-    .eq("user_id", userId)
-    .in("id", ids);
-
-  if (error) throw error;
+  if (deckId === "all-cards") {
+    if (lang && targetLang) {
+      await sql`
+        UPDATE cards SET learned = false
+        WHERE user_id = ${userId}
+          AND foreign_language = ${lang}
+          AND translation_language = ${targetLang}
+      `;
+    } else if (lang) {
+      await sql`
+        UPDATE cards SET learned = false
+        WHERE user_id = ${userId} AND foreign_language = ${lang}
+      `;
+    } else {
+      await sql`
+        UPDATE cards SET learned = false
+        WHERE user_id = ${userId}
+      `;
+    }
+  } else {
+    if (lang && targetLang) {
+      await sql`
+        UPDATE cards SET learned = false
+        WHERE user_id = ${userId}
+          AND foreign_language = ${lang}
+          AND translation_language = ${targetLang}
+          AND id IN (SELECT card_id FROM card_decks WHERE deck_id = ${deckId}::uuid)
+      `;
+    } else {
+      await sql`
+        UPDATE cards SET learned = false
+        WHERE user_id = ${userId}
+          AND id IN (SELECT card_id FROM card_decks WHERE deck_id = ${deckId}::uuid)
+      `;
+    }
+  }
 }
 
 export async function isCardDuplicate(
@@ -232,31 +215,37 @@ export async function isCardDuplicate(
   foreignWord: string,
   deckId: string,
 ): Promise<boolean> {
-  const cards = await getCards(userId);
   const normalized = foreignWord.trim().toLowerCase();
+
   if (deckId === "all-cards") {
-    return cards.some(
-      (c) => c.foreign_word.trim().toLowerCase() === normalized,
-    );
+    const { rows } = await sql`
+      SELECT 1 FROM cards
+      WHERE user_id = ${userId} AND LOWER(TRIM(foreign_word)) = ${normalized}
+      LIMIT 1
+    `;
+    return rows.length > 0;
   }
-  return cards.some(
-    (c) =>
-      c.foreign_word.trim().toLowerCase() === normalized &&
-      c.deck_ids.includes(deckId),
-  );
+
+  const { rows } = await sql`
+    SELECT 1 FROM cards c
+    JOIN card_decks cd ON cd.card_id = c.id
+    WHERE c.user_id = ${userId}
+      AND LOWER(TRIM(c.foreign_word)) = ${normalized}
+      AND cd.deck_id = ${deckId}::uuid
+    LIMIT 1
+  `;
+  return rows.length > 0;
 }
 
 // ─── History ─────────────────────────────────────────
 
 export async function getHistory(userId: string): Promise<DbHistoryItem[]> {
-  const { data, error } = await getSupabase()
-    .from("history")
-    .select("*")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false });
-
-  if (error) throw error;
-  return data ?? [];
+  const { rows } = await sql`
+    SELECT * FROM history
+    WHERE user_id = ${userId}
+    ORDER BY created_at DESC
+  `;
+  return rows as DbHistoryItem[];
 }
 
 export async function addToHistory(
@@ -269,41 +258,31 @@ export async function addToHistory(
     translation_language?: string;
   },
 ): Promise<DbHistoryItem> {
-  const { data, error } = await getSupabase()
-    .from("history")
-    .insert({
-      user_id: userId,
-      foreign_word: item.foreign_word,
-      translation: item.translation,
-      custom_translation: item.custom_translation ?? null,
-      foreign_language: item.foreign_language ?? null,
-      translation_language: item.translation_language ?? null,
-    })
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
+  const { rows } = await sql`
+    INSERT INTO history (user_id, foreign_word, translation, custom_translation, foreign_language, translation_language)
+    VALUES (
+      ${userId},
+      ${item.foreign_word},
+      ${item.translation},
+      ${item.custom_translation ?? null},
+      ${item.foreign_language ?? null},
+      ${item.translation_language ?? null}
+    )
+    RETURNING *
+  `;
+  return rows[0] as DbHistoryItem;
 }
 
 export async function clearHistory(userId: string): Promise<void> {
-  const { error } = await getSupabase()
-    .from("history")
-    .delete()
-    .eq("user_id", userId);
-
-  if (error) throw error;
+  await sql`DELETE FROM history WHERE user_id = ${userId}`;
 }
 
 export async function removeFromHistory(
   userId: string,
   itemId: string,
 ): Promise<void> {
-  const { error } = await getSupabase()
-    .from("history")
-    .delete()
-    .eq("id", itemId)
-    .eq("user_id", userId);
-
-  if (error) throw error;
+  await sql`
+    DELETE FROM history
+    WHERE id = ${itemId}::uuid AND user_id = ${userId}
+  `;
 }
